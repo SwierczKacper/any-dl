@@ -1,6 +1,17 @@
 import { UserFacingError } from './util.js';
 
-const FLAGS = new Set(['--clips', '--list', '--qualities', '--json', '--faststart', '--no-progress', '--yes', '--help', '--version']);
+const FLAGS = new Set([
+	'--clips',
+	'--list',
+	'--qualities',
+	'--json',
+	'--faststart',
+	'--channel-dir',
+	'--no-progress',
+	'--yes',
+	'--help',
+	'--version',
+]);
 
 const ALIASES = {
 	'-q': '--quality',
@@ -28,8 +39,10 @@ Targets
 Options
   -q, --quality <q>   best (default), worst, or an exact variant like 1080p60 / 720
       --qualities     list the available qualities for the target and exit
-  -o, --output <file> output filename (default: "<channel> <date> <title>.mp4")
-  -d, --dir <dir>     output directory (default: current directory)
+  -o, --output <file> output filename
+                      (default: "<channel> - <date> - <title> [<quality>].mp4")
+  -d, --dir <dir>     output directory (default: $KICK_VOD_DIR, else current dir)
+      --channel-dir   save into a per-channel subdirectory of the output directory
       --from <time>   start at this position, e.g. 00:12:30
       --to <time>     stop at this position, e.g. 01:45:00
       --clips         operate on the channel's clips instead of its VODs
@@ -43,12 +56,14 @@ Options
   -v, --version       show the version
 
 Environment
+  KICK_VOD_DIR  default output directory, so you can run this from anywhere
   CHROME_PATH   path to a Chrome/Chromium binary (auto-detected otherwise)
   FFMPEG_PATH   path to an ffmpeg binary (auto-detected otherwise)
 
 Examples
   kick-vod https://kick.com/somechannel/videos/019fdd44-f600-7184-bf35-ff795a9b372c
   kick-vod somechannel --quality 720p60 --dir ~/Videos
+  kick-vod <url> --dir ~/Videos --channel-dir
   kick-vod <url> --from 01:00:00 --to 01:15:00 -o highlight.mp4
 
 Not affiliated with Kick. For personal, lawful use only — you are responsible
@@ -61,7 +76,9 @@ export function parseArgs(argv) {
 		target: null,
 		quality: 'best',
 		output: null,
-		dir: process.cwd(),
+		// Left null so the caller can fall back to KICK_VOD_DIR before the cwd.
+		dir: null,
+		channelDir: false,
 		from: null,
 		to: null,
 		clips: false,
@@ -112,6 +129,7 @@ export function parseArgs(argv) {
 				options.limit = limit;
 				break;
 			}
+			case '--channel-dir': options.channelDir = true; break;
 			case '--clips': options.clips = true; break;
 			case '--list': options.list = true; break;
 			case '--qualities': options.qualities = true; break;

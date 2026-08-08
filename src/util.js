@@ -1,8 +1,10 @@
 import { existsSync } from 'node:fs';
-import { extname, join } from 'node:path';
+import { homedir } from 'node:os';
+import { extname, isAbsolute, join, resolve } from 'node:path';
 
-// Characters no filesystem accepts. Spaces are kept on purpose.
-const ILLEGAL_CHARS = '<>:"/\\|?*';
+// Characters no filesystem accepts, plus '!' — legal, but it triggers history
+// expansion in interactive shells, which makes such files annoying to handle.
+const ILLEGAL_CHARS = '<>:"/\\|?*!';
 const RESERVED_WINDOWS_NAMES = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
 
 function stripIllegalChars(text) {
@@ -26,6 +28,58 @@ export function sanitizeFilename(name, maxLength = 120) {
 	if (!clean || RESERVED_WINDOWS_NAMES.test(clean)) clean = 'kick-video';
 
 	return clean;
+}
+
+/**
+ * Stream titles are advertising space: they routinely end in a run of chat
+ * commands ("!sklep !skins !holy") that say nothing about the video. Strip
+ * those, tidy the leftover punctuation, and keep the part worth reading.
+ */
+export function normalizeTitle(title, maxLength = 90) {
+	let clean = String(title ?? '')
+		.normalize('NFC')
+		// A chat command is a lone "!word" token — drop it wherever it appears.
+		.replace(/(^|\s)![\p{L}\p{N}_]+/gu, ' ');
+
+	clean = stripIllegalChars(clean)
+		.replace(/\s+/g, ' ')
+		// Separators left dangling once the commands are gone.
+		.replace(/\s*[-–—|]\s*(?=[-–—|]|$)/g, ' ')
+		.replace(/^[\s.,;:_-]+|[\s.,;:_-]+$/g, '')
+		.trim();
+
+	if (clean.length > maxLength) {
+		const cut = clean.slice(0, maxLength);
+		// Only back off to the previous space when the cut lands mid-word.
+		const lastSpace = cut.lastIndexOf(' ');
+		const endsOnWord = clean[maxLength] === ' ';
+		clean = (endsOnWord || lastSpace <= maxLength * 0.6 ? cut : cut.slice(0, lastSpace))
+			.replace(/[\s.,;:_-]+$/g, '')
+			.trim();
+	}
+
+	return clean || 'untitled';
+}
+
+function expandHome(path) {
+	if (path === '~') return homedir();
+	if (path.startsWith('~/')) return join(homedir(), path.slice(2));
+	return path;
+}
+
+/**
+ * Work out where a download should land.
+ *
+ * An explicit --dir wins, then the KICK_VOD_DIR environment variable, then the
+ * current directory — which keeps the default behaving like any other CLI tool.
+ */
+export function resolveOutputDir({ dir, envDir, channel, perChannel = false, cwd = process.cwd() }) {
+	const base = expandHome(String(dir || envDir || cwd));
+	const absolute = isAbsolute(base) ? base : resolve(cwd, base);
+
+	if (!perChannel || !channel) return absolute;
+
+	return join(absolute, sanitizeFilename(channel, 60));
 }
 
 /** Append " (2)", " (3)", … until the path is free, so we never clobber a finished download. */

@@ -1,13 +1,15 @@
 import assert from 'node:assert/strict';
 import { mkdtempSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 
 import {
 	isUuid,
+	normalizeTitle,
 	parseKickDate,
 	parseTimecode,
+	resolveOutputDir,
 	sanitizeFilename,
 	uniquePath,
 	uuidV7Timestamp,
@@ -106,4 +108,73 @@ test('parseKickDate returns null for junk', () => {
 	assert.equal(parseKickDate('not a date'), null);
 	assert.equal(parseKickDate(null), null);
 	assert.equal(parseKickDate(''), null);
+});
+
+test('normalizeTitle strips trailing chat commands', () => {
+	assert.equal(
+		normalizeTitle('LAST DANCE GTA RP - STREFA.RP [DAY 1]| !sklep !skins !holy !swap !steel'),
+		'LAST DANCE GTA RP - STREFA.RP [DAY 1]'
+	);
+});
+
+test('normalizeTitle strips chat commands wherever they appear', () => {
+	assert.equal(normalizeTitle('!drop grind na rankingu !sklep'), 'grind na rankingu');
+});
+
+test('normalizeTitle keeps Polish characters intact', () => {
+	assert.equal(normalizeTitle('WIELKI UPDATE DO GOLFA - BITWA STREAMERÓW'), 'WIELKI UPDATE DO GOLFA - BITWA STREAMERÓW');
+	assert.equal(normalizeTitle('zażółć gęślą jaźń'), 'zażółć gęślą jaźń');
+});
+
+test('normalizeTitle drops exclamation marks that upset shells', () => {
+	assert.equal(normalizeTitle('WOW! ale gra'), 'WOW ale gra');
+});
+
+test('normalizeTitle cuts at a word boundary', () => {
+	const result = normalizeTitle('alpha bravo charlie delta echo foxtrot golf hotel india', 30);
+	assert.ok(result.length <= 30);
+	assert.ok(!result.endsWith('-'), 'must not end on a separator');
+	assert.equal(result, 'alpha bravo charlie delta echo');
+});
+
+test('normalizeTitle falls back when only commands remain', () => {
+	assert.equal(normalizeTitle('!sklep !skins'), 'untitled');
+	assert.equal(normalizeTitle(''), 'untitled');
+	assert.equal(normalizeTitle(null), 'untitled');
+});
+
+test('resolveOutputDir defaults to the current directory', () => {
+	assert.equal(resolveOutputDir({ cwd: '/home/u/work' }), '/home/u/work');
+});
+
+test('resolveOutputDir prefers --dir over the environment', () => {
+	const dir = resolveOutputDir({ dir: '/explicit', envDir: '/from-env', cwd: '/home/u' });
+	assert.equal(dir, '/explicit');
+});
+
+test('resolveOutputDir uses KICK_VOD_DIR when no --dir is given', () => {
+	assert.equal(resolveOutputDir({ envDir: '/from-env', cwd: '/home/u' }), '/from-env');
+});
+
+test('resolveOutputDir resolves a relative directory against the cwd', () => {
+	assert.equal(resolveOutputDir({ dir: 'out', cwd: '/home/u/work' }), '/home/u/work/out');
+});
+
+test('resolveOutputDir expands a leading tilde', () => {
+	const dir = resolveOutputDir({ dir: '~/Videos', cwd: '/somewhere' });
+	assert.equal(dir, join(homedir(), 'Videos'));
+});
+
+test('resolveOutputDir adds a channel subdirectory when asked', () => {
+	const dir = resolveOutputDir({ dir: '/videos', channel: 'xmerghani', perChannel: true, cwd: '/home/u' });
+	assert.equal(dir, '/videos/xmerghani');
+});
+
+test('resolveOutputDir ignores the channel subdirectory without a channel', () => {
+	assert.equal(resolveOutputDir({ dir: '/videos', perChannel: true, cwd: '/home/u' }), '/videos');
+});
+
+test('resolveOutputDir keeps a hostile channel name from escaping the directory', () => {
+	const dir = resolveOutputDir({ dir: '/videos', channel: '../../etc', perChannel: true, cwd: '/home/u' });
+	assert.equal(dir, '/videos/etc');
 });

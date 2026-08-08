@@ -1,5 +1,15 @@
 # Changelog
 
+## 1.1.0
+
+- Clean up generated filenames. Stream titles often end in a run of chat commands
+  (`!sklep !skins !holy`) that describe nothing; those are now stripped, along with
+  exclamation marks, which trigger history expansion in interactive shells. Titles
+  are truncated on a word boundary. Accented characters are preserved.
+- Add `KICK_VOD_DIR`, a default output directory, so the command can be run from
+  anywhere without landing files in the current directory. `--dir` still wins.
+- Add `--channel-dir` to save into a per-channel subdirectory.
+
 ## 1.0.1
 
 - Fix a crash at the "Start download?" prompt. The prompts built their interface

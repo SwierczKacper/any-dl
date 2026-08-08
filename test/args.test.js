@@ -7,7 +7,8 @@ test('parseArgs defaults to the best quality and the current directory', () => {
 	const options = parseArgs(['xmerghani']);
 	assert.equal(options.target, 'xmerghani');
 	assert.equal(options.quality, 'best');
-	assert.equal(options.dir, process.cwd());
+	assert.equal(options.dir, null);
+	assert.equal(options.channelDir, false);
 	assert.equal(options.yes, false);
 	assert.equal(options.progress, true);
 });
@@ -23,12 +24,13 @@ test('parseArgs accepts --key=value', () => {
 });
 
 test('parseArgs handles flags', () => {
-	const options = parseArgs(['x', '--clips', '--yes', '--json', '--no-progress', '--faststart']);
+	const options = parseArgs(['x', '--clips', '--yes', '--json', '--no-progress', '--faststart', '--channel-dir']);
 	assert.equal(options.clips, true);
 	assert.equal(options.yes, true);
 	assert.equal(options.json, true);
 	assert.equal(options.progress, false);
 	assert.equal(options.faststart, true);
+	assert.equal(options.channelDir, true);
 });
 
 test('parseArgs keeps the timecodes as given for later validation', () => {

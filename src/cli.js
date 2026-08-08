@@ -1,5 +1,5 @@
 import { mkdirSync, readFileSync, statSync } from 'node:fs';
-import { dirname, isAbsolute, join, resolve } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { HELP_TEXT, parseArgs } from './args.js';
@@ -17,7 +17,14 @@ import {
 	success,
 	warn,
 } from './ui.js';
-import { parseTimecode, sanitizeFilename, uniquePath, UserFacingError } from './util.js';
+import {
+	normalizeTitle,
+	parseTimecode,
+	resolveOutputDir,
+	sanitizeFilename,
+	uniquePath,
+	UserFacingError,
+} from './util.js';
 
 function readVersion() {
 	try {
@@ -31,8 +38,8 @@ function readVersion() {
 function buildFilename(media, variant) {
 	const date = media.startTime ? formatDate(media.startTime).slice(0, 10) : '';
 	const quality = variant ? ` [${variant.name}]` : '';
-	const stem = sanitizeFilename([media.channel, date, media.title].filter(Boolean).join(' - '));
-	return `${stem}${quality}.mp4`;
+	const fields = [media.channel, date, normalizeTitle(media.title)].filter(Boolean);
+	return `${sanitizeFilename(fields.join(' - '))}${quality}.mp4`;
 }
 
 function describeMedia(media) {
@@ -199,7 +206,12 @@ export async function run(argv) {
 		);
 	}
 
-	const outputDir = isAbsolute(options.dir) ? options.dir : resolve(process.cwd(), options.dir);
+	const outputDir = resolveOutputDir({
+		dir: options.dir,
+		envDir: process.env.KICK_VOD_DIR,
+		channel: media.channel,
+		perChannel: options.channelDir,
+	});
 	mkdirSync(outputDir, { recursive: true });
 
 	const requestedName = options.output
