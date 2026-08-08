@@ -1,6 +1,6 @@
 {
   "name": "kick-vod",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Download VODs and clips from kick.com in full quality using ffmpeg. No npm dependencies.",
   "type": "module",
   "license": "MIT",

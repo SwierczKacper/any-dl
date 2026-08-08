@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.1
+
+- Fix a crash at the "Start download?" prompt. The prompts built their interface
+  with `createInterface` from `node:readline`, whose `question()` takes a callback
+  and returns `undefined` — so awaiting it threw
+  `TypeError: Cannot read properties of undefined (reading 'trim')`.
+  They now use `node:readline/promises`.
+
 ## 1.0.0
 
 First public release.

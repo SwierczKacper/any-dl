@@ -1,4 +1,7 @@
 import readline from 'node:readline';
+// The promise-returning question() lives here; the callback-style one in
+// node:readline returns undefined.
+import { createInterface } from 'node:readline/promises';
 import { c } from './ui.js';
 
 export function isInteractive() {
@@ -111,7 +114,7 @@ export function select({ message, choices, pageSize = 8 }) {
 export async function input({ message }) {
 	if (!isInteractive()) return null;
 
-	const rl = readline.createInterface({ input: process.stdin, output: process.stderr });
+	const rl = createInterface({ input: process.stdin, output: process.stderr });
 	try {
 		const answer = await rl.question(`${c.cyan('?')} ${c.bold(message)}: `);
 		return answer.trim() || null;
@@ -124,7 +127,7 @@ export async function input({ message }) {
 export async function confirm({ message, defaultValue = true }) {
 	if (!isInteractive()) return defaultValue;
 
-	const rl = readline.createInterface({ input: process.stdin, output: process.stderr });
+	const rl = createInterface({ input: process.stdin, output: process.stderr });
 	const suffix = defaultValue ? 'Y/n' : 'y/N';
 
 	try {
