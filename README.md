@@ -69,6 +69,9 @@ export CHROME_PATH=/usr/bin/chromium
 export FFMPEG_PATH=/usr/local/bin/ffmpeg
 ```
 
+A third variable, `KICK_VOD_DIR`, sets where downloads go — see
+[Where files land](#where-files-land-and-what-theyre-called).
+
 No Chrome anywhere on the machine? Fetch a private copy (this does **not** add a
 dependency to the project — it just puts a browser on disk):
 
@@ -128,7 +131,8 @@ Run it with no arguments at all and it will ask for a link or channel name.
 | `-q, --quality <q>` | `best` (default), `worst`, or an exact variant: `1080p60`, `720p60`, `720`, … |
 | `--qualities` | list what this VOD offers, then exit |
 | `-o, --output <file>` | output filename (default: `<channel> - <date> - <title> [<quality>].mp4`) |
-| `-d, --dir <dir>` | output directory (default: current directory) |
+| `-d, --dir <dir>` | output directory (default: `$KICK_VOD_DIR`, otherwise the current directory) |
+| `--channel-dir` | save into a per-channel subdirectory of the output directory |
 | `--from <time>` | start at this position, e.g. `01:12:30` |
 | `--to <time>` | stop at this position |
 | `--clips` | work on the channel's clips instead of its VODs |
@@ -174,6 +178,32 @@ kick-vod <url> --json | jq -r .sourceUrl
 | `0` | success |
 | `1` | error (bad arguments, VOD unavailable, ffmpeg failure, …) |
 | `130` | cancelled by the user (Ctrl+C, or "no" at the prompt) |
+
+### Where files land, and what they're called
+
+By default the file is written to the current directory, like any other CLI tool.
+To have one fixed destination no matter where you run the command from, set
+`KICK_VOD_DIR` once:
+
+```bash
+echo 'export KICK_VOD_DIR="$HOME/Videos/kick"' >> ~/.bashrc
+```
+
+`--dir` always overrides it, and `--channel-dir` adds a per-channel subdirectory:
+
+```
+~/Videos/kick/xmerghani/xmerghani - 2026-08-07 - LAST DANCE GTA RP [1080p60].mp4
+```
+
+Filenames are built as `<channel> - <date> - <title> [<quality>].mp4`. Stream titles
+tend to end in a run of chat commands that describe nothing, so those are stripped,
+along with exclamation marks (which upset shell history expansion) and anything a
+filesystem rejects. Accented characters are kept — `STREAMERÓW` stays `STREAMERÓW`.
+
+```
+before:  LAST DANCE GTA RP - STREFA.RP [DAY 1]| !sklep !skins !holy !swap !steel
+after:   xmerghani - 2026-08-07 - LAST DANCE GTA RP - STREFA.RP [DAY 1] [1080p60].mp4
+```
 
 ---
 
