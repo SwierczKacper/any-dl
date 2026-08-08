@@ -1,0 +1,6 @@
+node_modules/
+*.mp4
+*.part
+downloads/
+.DS_Store
+npm-debug.log*

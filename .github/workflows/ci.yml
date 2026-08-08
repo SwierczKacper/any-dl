@@ -1,0 +1,30 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['18', '20', '22']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      # No dependencies to install, so just make sure every module parses
+      # and the CLI runs on this Node version.
+      - name: Syntax check
+        run: for file in bin/*.js src/*.js; do node --check "$file"; done
+
+      - name: CLI smoke test
+        run: |
+          node bin/kick-vod.js --version
+          node bin/kick-vod.js --help > /dev/null

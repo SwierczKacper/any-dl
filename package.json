@@ -1,0 +1,39 @@
+{
+  "name": "kick-vod",
+  "version": "1.0.0",
+  "description": "Download VODs and clips from kick.com in full quality using ffmpeg. No npm dependencies.",
+  "type": "module",
+  "license": "MIT",
+  "author": "Świercz Kacper (https://swierczkacper.pl)",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SwierczKacper/kick-vod.git"
+  },
+  "bugs": {
+    "url": "https://github.com/SwierczKacper/kick-vod/issues"
+  },
+  "homepage": "https://github.com/SwierczKacper/kick-vod#readme",
+  "bin": {
+    "kick-vod": "./bin/kick-vod.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "README.md"
+  ],
+  "keywords": [
+    "kick",
+    "kick.com",
+    "vod",
+    "downloader",
+    "ffmpeg",
+    "hls",
+    "cli"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "start": "node bin/kick-vod.js"
+  }
+}
