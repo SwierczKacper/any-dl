@@ -44,7 +44,8 @@ function parseProgressChunk(text) {
 	return stats;
 }
 
-function buildArgs({ url, output, from, to, faststart }) {
+/** Exported so the argument construction — notably the --from/--to maths — is testable. */
+export function buildArgs({ url, output, from, to, faststart }) {
 	const args = ['-hide_banner', '-loglevel', 'error'];
 
 	// Long VODs are streamed over HTTP for hours; survive transient drops.

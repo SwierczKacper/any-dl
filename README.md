@@ -320,8 +320,23 @@ an issue.
 ## Contributing
 
 Issues and pull requests are welcome — especially fixes for Kick API changes.
-There is no build step and no test framework: clone it, edit it, run
-`node bin/kick-vod.js` to try it. Please keep the project dependency-free.
+There is no build step: clone it, edit it, run `node bin/kick-vod.js` to try it.
+Please keep the project dependency-free.
+
+Tests use the built-in Node test runner, so there is still nothing to install:
+
+```bash
+npm test
+```
+
+They cover link parsing, playlist parsing, quality selection, ffmpeg argument
+construction, filename and timecode handling, and the interactive prompts. The
+prompt tests run under a real pty via `script(1)` and skip themselves on
+platforms without it.
+
+Work happens on short-lived branches (`fix/…`, `feat/…`, `docs/…`) merged into
+`main` through a pull request once CI is green. `main` stays releasable, and
+releases are SemVer tags.
 
 ## Author
 
