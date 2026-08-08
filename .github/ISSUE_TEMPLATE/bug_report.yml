@@ -1,0 +1,48 @@
+name: Bug report
+description: Something broke, or Kick changed again
+title: '[bug] '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Kick has no public API, so this tool relies on endpoints that change without
+        notice — it has broken once already, when VOD ids moved to UUIDv7. If it
+        stopped working for everyone, that is probably why, and the report is useful
+        even without any detail below.
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: The command you ran and what it printed. Paste the whole output if you can.
+      render: shell
+    validations:
+      required: true
+
+  - type: input
+    id: link
+    attributes:
+      label: Kick link
+      description: The VOD or channel involved, if it is not private.
+      placeholder: https://kick.com/somechannel/videos/…
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `kick-vod --version`.
+      placeholder: '1.7.1'
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: System
+      description: OS and the output of `node --version`.
+      placeholder: Ubuntu 24.04 on WSL2, Node v20.19.2
+    validations:
+      required: false

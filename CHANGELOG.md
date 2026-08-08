@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.8.0
+
+- Add issue templates, a contributing guide and a prominent invitation in the
+  README to ask for anything the tool is missing, however small.
+- Document why other Kick downloaders stopped working (the UUIDv7 id change),
+  since that is what people search for when theirs breaks.
+- Prepare for npm: broader keywords, CHANGELOG shipped in the package, and a
+  repository description that no longer claims zero dependencies.
+
 ## 1.7.1
 
 - Drop the realtime multiple from the interactive progress display. It is

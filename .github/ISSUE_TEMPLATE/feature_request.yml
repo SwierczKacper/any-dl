@@ -1,0 +1,38 @@
+name: Feature request
+description: Something you wish it did — however small
+title: '[idea] '
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        No idea is too small. "I wish it remembered my last quality choice" is a
+        perfectly good request, and so is "I want it to do X, is that possible?"
+
+        You do not need to know how it would work. Describing the annoyance is enough.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: What you were doing when you wanted this, and what got in the way.
+      placeholder: I archive a channel every week and retype the same options each time…
+    validations:
+      required: true
+
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help?
+      description: Rough is fine — a flag, a prompt, different output, anything.
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `kick-vod --version`, if you have it installed.
+      placeholder: '1.7.1'
+    validations:
+      required: false
