@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { buildArgs } from '../src/ffmpeg.js';
+import { mkdtempSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { spawnSync } from 'node:child_process';
+
+import { buildArgs, download, findFfmpeg } from '../src/ffmpeg.js';
 
 const BASE = { url: 'https://cdn.example.com/playlist.m3u8', output: 'out.mp4' };
 
@@ -60,4 +65,49 @@ test('buildArgs omits trimming flags when no range is given', () => {
 test('buildArgs only adds faststart when asked', () => {
 	assert.ok(!buildArgs(BASE).includes('-movflags'));
 	assert.equal(valueAfter(buildArgs({ ...BASE, faststart: true }), '-movflags'), '+faststart');
+});
+
+// The empty-output bug lived here: ffmpeg exits 0 having written only a
+// container header, so the caller needs the reported position to tell the
+// difference. These run against a locally generated file — no network.
+const FFMPEG = findFfmpeg();
+const SKIP_INTEGRATION = FFMPEG ? false : 'requires ffmpeg on PATH';
+
+function makeSampleVideo(dir) {
+	const path = join(dir, 'sample.mp4');
+	const result = spawnSync(
+		FFMPEG,
+		['-y', '-f', 'lavfi', '-i', 'testsrc=duration=3:size=320x240:rate=10', '-c:v', 'mpeg4', path],
+		{ stdio: 'ignore' }
+	);
+	return result.status === 0 ? path : null;
+}
+
+test('download reports how much it actually wrote', { skip: SKIP_INTEGRATION, timeout: 60_000 }, async () => {
+	const dir = mkdtempSync(join(tmpdir(), 'kick-vod-ffmpeg-'));
+	const source = makeSampleVideo(dir);
+	if (!source) return; // this ffmpeg build cannot produce the fixture
+
+	const result = await download({ url: source, output: join(dir, 'out.mp4') });
+
+	assert.equal(result.interrupted, false);
+	assert.ok(result.seconds > 2.5, `expected roughly 3 seconds, got ${result.seconds}`);
+});
+
+test('download reports ~0 seconds when the range yields no frames', { skip: SKIP_INTEGRATION, timeout: 60_000 }, async () => {
+	const dir = mkdtempSync(join(tmpdir(), 'kick-vod-ffmpeg-'));
+	const source = makeSampleVideo(dir);
+	if (!source) return;
+
+	// Starts past the end of the clip, so nothing can be copied.
+	const result = await download({ url: source, output: join(dir, 'empty.mp4'), from: 30, to: 33 });
+
+	assert.ok(result.seconds < 0.1, `expected an empty result, got ${result.seconds}`);
+});
+
+test('buildArgs omits reconnect flags for non-HTTP inputs', () => {
+	// ffmpeg rejects these outright for the file protocol: "Option reconnect not found."
+	const args = buildArgs({ url: '/tmp/local.mp4', output: 'out.mp4' });
+	assert.ok(!args.includes('-reconnect'));
+	assert.ok(!args.includes('-reconnect_delay_max'));
 });

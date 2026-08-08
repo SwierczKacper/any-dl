@@ -10,6 +10,14 @@
   `STREAMEROW`, `Łódź` → `Lodz`, `Straße` → `Strasse`), so names survive moving
   between filesystems and machines. Cyrillic, Greek and CJK are left untouched,
   having no ASCII equivalent worth substituting.
+- Fail instead of reporting success when ffmpeg writes an empty file. A
+  `--from`/`--to` range shorter than the gap to the next keyframe produces a
+  valid but frameless MP4, and ffmpeg exits 0 for it, so `✓ Saved` was printed
+  for a file containing nothing. The empty file is now removed and the error
+  explains how to widen the range.
+- Only pass ffmpeg's `-reconnect` options for HTTP sources. They belong to the
+  HTTP protocol handler, and ffmpeg refuses to start with them for any other
+  input ("Option reconnect not found").
 
 ## 1.1.0
 

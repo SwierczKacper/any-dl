@@ -48,12 +48,16 @@ function parseProgressChunk(text) {
 export function buildArgs({ url, output, from, to, faststart }) {
 	const args = ['-hide_banner', '-loglevel', 'error'];
 
-	// Long VODs are streamed over HTTP for hours; survive transient drops.
-	args.push(
-		'-reconnect', '1',
-		'-reconnect_streamed', '1',
-		'-reconnect_delay_max', '10'
-	);
+	// Long VODs are streamed over HTTP for hours; survive transient drops. These
+	// belong to the HTTP protocol handler — ffmpeg rejects them outright for any
+	// other input, so only add them when the source really is a URL.
+	if (/^https?:/i.test(url)) {
+		args.push(
+			'-reconnect', '1',
+			'-reconnect_streamed', '1',
+			'-reconnect_delay_max', '10'
+		);
+	}
 
 	// Placed before -i so ffmpeg seeks instead of decoding through the skipped part.
 	if (from != null) args.push('-ss', String(from));
@@ -89,6 +93,9 @@ export function download({ url, output, durationSec, from, to, faststart = false
 
 		let stderrTail = [];
 		let interrupted = false;
+		// Last position ffmpeg reported, so the caller can tell an empty result
+		// from a real one — ffmpeg exits 0 either way.
+		let writtenSeconds = 0;
 
 		// Ctrl+C: ask ffmpeg to finalise the container so the partial file stays playable.
 		const onSigint = () => {
@@ -98,12 +105,14 @@ export function download({ url, output, durationSec, from, to, faststart = false
 		process.on('SIGINT', onSigint);
 
 		child.stdout.on('data', (chunk) => {
-			if (!onProgress) return;
 			const stats = parseProgressChunk(chunk.toString());
 			const microseconds = Number(stats.out_time_us ?? stats.out_time_ms);
 			if (!Number.isFinite(microseconds)) return;
 
 			const seconds = microseconds / 1_000_000;
+			writtenSeconds = Math.max(writtenSeconds, seconds);
+
+			if (!onProgress) return;
 			onProgress({
 				seconds,
 				bytes: Number(stats.total_size) || 0,
@@ -126,11 +135,11 @@ export function download({ url, output, durationSec, from, to, faststart = false
 			process.off('SIGINT', onSigint);
 
 			if (interrupted) {
-				resolve({ output, interrupted: true });
+				resolve({ output, interrupted: true, seconds: writtenSeconds });
 				return;
 			}
 			if (code === 0) {
-				resolve({ output, interrupted: false });
+				resolve({ output, interrupted: false, seconds: writtenSeconds });
 				return;
 			}
 

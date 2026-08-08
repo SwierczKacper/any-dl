@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, statSync } from 'node:fs';
+import { mkdirSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -25,6 +25,9 @@ import {
 	uniquePath,
 	UserFacingError,
 } from './util.js';
+
+// Below this, ffmpeg wrote a container header and nothing else.
+const MINIMUM_USEFUL_SECONDS = 0.1;
 
 function readVersion() {
 	try {
@@ -262,6 +265,18 @@ export async function run(argv) {
 		size = statSync(outputPath).size;
 	} catch {
 		// Nothing written — the error path below covers it.
+	}
+
+	// ffmpeg exits 0 even when it wrote no frames, which happens when a --from/--to
+	// range is shorter than the gap to the next keyframe. Don't call that a success.
+	if (!result.interrupted && result.seconds < MINIMUM_USEFUL_SECONDS) {
+		rmSync(outputPath, { force: true });
+		throw new UserFacingError(
+			'ffmpeg produced an empty file — nothing was downloaded.',
+			from != null || to != null
+				? 'The requested range is probably shorter than the distance to the next keyframe. Widen it (10 seconds or more) and try again.'
+				: 'The stream may have been pruned by Kick. Retry, or try a different quality.'
+		);
 	}
 
 	if (result.interrupted) {
