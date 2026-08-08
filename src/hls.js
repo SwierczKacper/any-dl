@@ -103,3 +103,15 @@ export function describeVariant(variant) {
 	const mbps = variant.bandwidth ? `${(variant.bandwidth / 1_000_000).toFixed(2)} Mbps` : 'unknown bitrate';
 	return `${variant.name} (${resolution}, ${mbps})`;
 }
+
+/**
+ * Rough size of `seconds` of this variant, in bytes.
+ *
+ * BANDWIDTH in a master playlist is the variant's *peak* rate, so this comes out
+ * a few per cent high — the safe direction for a number whose job is to warn
+ * someone before they fill a disk. Null when there is nothing to go on.
+ */
+export function estimateBytes(variant, seconds) {
+	if (!variant?.bandwidth || !Number.isFinite(seconds) || seconds <= 0) return null;
+	return (variant.bandwidth * seconds) / 8;
+}

@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 import { HELP_TEXT, parseArgs } from './args.js';
 import { download } from './ffmpeg.js';
-import { describeVariant, getVariants, selectVariant } from './hls.js';
+import { describeVariant, estimateBytes, getVariants, selectVariant } from './hls.js';
 import * as kick from './kick.js';
 import { confirm, input, isInteractive, select } from './prompt.js';
 import {
@@ -49,6 +49,35 @@ export function buildFilename(media) {
 	const date = media.startTime ? formatDate(media.startTime).slice(0, 10) : '';
 	const fields = [media.channel, date, normalizeTitle(media.title)].filter(Boolean);
 	return `${sanitizeFilename(fields.join(' - '))}.mp4`;
+}
+
+/**
+ * Quality list for the picker: name, resolution, bitrate and — the point of the
+ * exercise — roughly what the file will weigh. Variants arrive best-first, so
+ * the first entry is both the recommendation and the initial selection.
+ */
+export function qualityChoices(variants, seconds) {
+	const nameWidth = Math.max(...variants.map((variant) => variant.name.length));
+	const resolutionWidth = Math.max(
+		...variants.map((variant) => (variant.width && variant.height ? `${variant.width}x${variant.height}`.length : 7))
+	);
+
+	return variants.map((variant, index) => {
+		const resolution = variant.width && variant.height ? `${variant.width}x${variant.height}` : 'unknown';
+		const mbps = variant.bandwidth ? `${(variant.bandwidth / 1_000_000).toFixed(2)} Mbps` : '';
+		const bytes = estimateBytes(variant, seconds);
+		const size = bytes ? `~${formatBytes(bytes)}` : '';
+
+		const columns = [
+			variant.name.padEnd(nameWidth),
+			resolution.padEnd(resolutionWidth),
+			mbps.padStart(9),
+			size.padStart(10),
+		];
+		if (index === 0) columns.push(' (recommended)');
+
+		return { name: columns.join('  '), value: variant };
+	});
 }
 
 function describeMedia(media) {
@@ -183,23 +212,20 @@ export async function run(argv) {
 		if (variants.length === 0) {
 			process.stdout.write('This is a clip — only the original quality is available.\n');
 		} else {
-			for (const variant of variants) process.stdout.write(`${describeVariant(variant)}\n`);
+			const seconds = (parseTimecode(options.to) ?? media.durationSec ?? 0) - (parseTimecode(options.from) ?? 0);
+			for (const choice of qualityChoices(variants, seconds)) process.stdout.write(`${choice.name}\n`);
 		}
 		return 0;
 	}
 
-	const variant = variants.length > 0 ? selectVariant(variants, options.quality) : null;
-	const sourceUrl = variant ? variant.url : media.directUrl;
-
-	if (!sourceUrl) throw new UserFacingError('No downloadable stream URL found for this item.');
-
 	if (options.json) {
+		const chosen = variants.length > 0 ? selectVariant(variants, options.quality ?? 'best') : null;
 		process.stdout.write(
 			`${JSON.stringify(
 				{
 					...media,
-					selectedQuality: variant?.name ?? 'original',
-					sourceUrl,
+					selectedQuality: chosen?.name ?? 'original',
+					sourceUrl: chosen ? chosen.url : media.directUrl,
 					availableQualities: variants.map((v) => v.name),
 				},
 				null,
@@ -233,14 +259,44 @@ export async function run(argv) {
 	process.stderr.write('\n');
 	info(`${c.bold(media.title)}`);
 	info(`${describeMedia(media)}`);
-	info(`Quality: ${c.bold(variant ? describeVariant(variant) : 'original (clip)')}`);
 	if (from != null || to != null) {
 		info(`Range:   ${formatDuration(from ?? 0)} → ${to != null ? formatDuration(to) : 'end'}`);
 	}
 	info(`File:    ${outputPath}`);
 	process.stderr.write('\n');
 
-	if (!options.yes) {
+	// How much video is actually being fetched — what the size estimates describe.
+	const sliceSeconds = (to ?? media.durationSec ?? 0) - (from ?? 0);
+
+	let variant = null;
+	let pickedFromList = false;
+
+	if (variants.length === 0) {
+		// A clip: one quality, nothing to choose.
+	} else if (options.quality != null) {
+		variant = selectVariant(variants, options.quality);
+	} else if (options.yes || !isInteractive()) {
+		variant = selectVariant(variants, 'best');
+	} else {
+		variant = await select({
+			message: 'Select quality',
+			choices: qualityChoices(variants, sliceSeconds),
+			pageSize: 8,
+		});
+		if (!variant) {
+			warn('Cancelled.');
+			return 130;
+		}
+		pickedFromList = true;
+	}
+
+	const sourceUrl = variant ? variant.url : media.directUrl;
+	if (!sourceUrl) throw new UserFacingError('No downloadable stream URL found for this item.');
+
+	info(`Quality: ${c.bold(variant ? describeVariant(variant) : 'original (clip)')}`);
+
+	// Choosing from the list already was the confirmation.
+	if (!options.yes && !pickedFromList) {
 		const proceed = await confirm({ message: 'Start download?', defaultValue: true });
 		if (!proceed) {
 			warn('Cancelled.');

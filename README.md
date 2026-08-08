@@ -135,7 +135,7 @@ Run it with no arguments at all and it will ask for a link or channel name.
 
 | Option | Description |
 | --- | --- |
-| `-q, --quality <q>` | `best` (default), `worst`, or an exact variant: `1080p60`, `720p60`, `720`, … |
+| `-q, --quality <q>` | `best`, `worst`, or an exact variant: `1080p60`, `720p60`, `720`, … Omit it to pick from a list |
 | `--qualities` | list what this VOD offers, then exit |
 | `-o, --output <file>` | output filename (default: `<channel> - <date> - <title>.mp4`) |
 | `-d, --dir <dir>` | output directory (default: `$KICK_VOD_DIR`, otherwise the current directory) |
@@ -185,6 +185,29 @@ kick-vod <url> --json | jq -r .sourceUrl
 | `0` | success |
 | `1` | error (bad arguments, VOD unavailable, ffmpeg failure, …) |
 | `130` | cancelled by the user (Ctrl+C, or "no" at the prompt) |
+
+### Choosing a quality
+
+With no `--quality`, the download opens a list instead of silently taking the
+best one — because "best" on an eight-hour stream is several gigabytes, and it is
+better to know that first:
+
+```
+? Select quality — ↑/↓ move, Enter select, q quit
+❯ 1080p60  1920x1080  8.66 Mbps     ~3.6 GB   (recommended)
+  720p60   1280x720   3.33 Mbps     ~1.4 GB
+  480p30   852x480    1.34 Mbps   ~573.6 MB
+  360p30   640x360    0.63 Mbps   ~270.4 MB
+  160p30   284x160    0.23 Mbps    ~98.7 MB
+```
+
+Sizes cover the range actually being fetched, so they shrink with `--from`/`--to`.
+They are derived from the playlist's advertised bitrate, which is a *peak*
+figure, so expect the real file to come in a few per cent under. Picking an entry
+starts the download — there is no second confirmation.
+
+Passing `--quality` skips the list entirely, as do `--yes` and any run without a
+terminal, which keeps scripts and CI working exactly as before.
 
 ### Where files land, and what they're called
 

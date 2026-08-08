@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.5.0
+
+- Choose the quality from a list instead of silently taking the best one. It
+  shows resolution, bitrate and an estimated file size for the range being
+  fetched, with the best quality preselected; picking one starts the download,
+  so it replaces the separate confirmation rather than adding a step.
+  Passing --quality still skips it, as do --yes and non-interactive runs.
+- --qualities now includes the same size estimates.
+- Fix column alignment in the pickers: the renderer collapsed runs of spaces,
+  so any aligned output came out ragged.
+
 ## 1.4.0
 
 - Answer the download prompt with a single keypress. `y` or `n` acts

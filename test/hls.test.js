@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { describeVariant, parseMasterPlaylist, selectVariant } from '../src/hls.js';
+import { describeVariant, estimateBytes, parseMasterPlaylist, selectVariant } from '../src/hls.js';
 
 const MASTER_URL = 'https://stream.example.com/ivs/v1/media/hls/master.m3u8';
 
@@ -86,4 +86,25 @@ test('selectVariant reports what is available when nothing matches', () => {
 test('describeVariant renders resolution and bitrate', () => {
 	const [best] = parseMasterPlaylist(MASTER_PLAYLIST, MASTER_URL);
 	assert.equal(describeVariant(best), '1080p60 (1920x1080, 8.66 Mbps)');
+});
+
+test('estimateBytes turns a bitrate and a duration into a size', () => {
+	// 8 Mbps for 10 seconds is 10 MB.
+	assert.equal(estimateBytes({ bandwidth: 8_000_000 }, 10), 10_000_000);
+});
+
+test('estimateBytes lands close to a real download', () => {
+	// A measured hour of Kick's 1080p60 came to 3.4 GiB; BANDWIDTH is the peak
+	// rate, so the estimate should sit slightly above that, never below.
+	const estimate = estimateBytes({ bandwidth: 8_660_776 }, 3600);
+	const measured = 3.4 * 1024 ** 3;
+	assert.ok(estimate > measured, 'estimate must not undersell the size');
+	assert.ok(estimate < measured * 1.2, `estimate too high: ${estimate / 1024 ** 3} GiB`);
+});
+
+test('estimateBytes gives up when there is nothing to go on', () => {
+	assert.equal(estimateBytes({ bandwidth: 0 }, 60), null);
+	assert.equal(estimateBytes({ bandwidth: 8_000_000 }, 0), null);
+	assert.equal(estimateBytes({ bandwidth: 8_000_000 }, NaN), null);
+	assert.equal(estimateBytes(null, 60), null);
 });

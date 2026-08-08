@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { buildFilename } from '../src/cli.js';
+import { buildFilename, qualityChoices } from '../src/cli.js';
 
 const VOD = {
 	channel: 'xmerghani',
@@ -36,4 +36,42 @@ test('buildFilename always ends in .mp4', () => {
 test('buildFilename folds accents so the name is portable', () => {
 	const name = buildFilename({ ...VOD, title: 'WIELKI UPDATE DO GOLFA - BITWA STREAMERÓW' });
 	assert.equal(name, 'xmerghani - 2026-08-07 - WIELKI UPDATE DO GOLFA - BITWA STREAMEROW.mp4');
+});
+
+const VARIANTS = [
+	{ name: '1080p60', width: 1920, height: 1080, bandwidth: 8_660_776 },
+	{ name: '720p60', width: 1280, height: 720, bandwidth: 3_331_553 },
+	{ name: '160p30', width: 284, height: 160, bandwidth: 230_000 },
+];
+
+test('qualityChoices lists every variant with its estimated size', () => {
+	const choices = qualityChoices(VARIANTS, 3600);
+	assert.equal(choices.length, 3);
+	assert.match(choices[0].name, /1080p60/);
+	assert.match(choices[0].name, /1920x1080/);
+	assert.match(choices[0].name, /8\.66 Mbps/);
+	assert.match(choices[0].name, /~3\.6 GB/);
+});
+
+test('qualityChoices marks the first entry as recommended', () => {
+	const choices = qualityChoices(VARIANTS, 3600);
+	assert.match(choices[0].name, /\(recommended\)/);
+	assert.ok(!choices[1].name.includes('(recommended)'));
+});
+
+test('qualityChoices returns the variant itself as the value', () => {
+	assert.equal(qualityChoices(VARIANTS, 60)[1].value, VARIANTS[1]);
+});
+
+test('qualityChoices aligns the columns', () => {
+	// Ragged columns are unreadable in a picker, so the padding matters.
+	const choices = qualityChoices(VARIANTS, 3600);
+	const positions = choices.map((choice) => choice.name.indexOf('Mbps'));
+	assert.equal(new Set(positions).size, 1, `Mbps column not aligned: ${positions}`);
+});
+
+test('qualityChoices copes with an unknown duration', () => {
+	const choices = qualityChoices(VARIANTS, 0);
+	assert.match(choices[0].name, /1080p60/);
+	assert.ok(!choices[0].name.includes('~'));
 });
