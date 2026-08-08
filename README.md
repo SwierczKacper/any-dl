@@ -12,7 +12,7 @@ kick-vod https://kick.com/somechannel/videos/019fdd44-f600-7184-bf35-ff795a9b372
 › LAST DANCE GTA RP - STREFA.RP [DAY 1]
 › 2026-08-07 19:28 · 08:07:45 · Just Chatting · 87,528 views
 › Quality: 1080p60 (1920x1080, 8.66 Mbps)
-› File:    xmerghani - 2026-08-07 - LAST DANCE GTA RP [1080p60].mp4
+› File:    xmerghani - 2026-08-07 - LAST DANCE GTA RP.mp4
 
   ████████████░░░░░░░░░░░░  52.4%  04:15:31  6.2 GB  47.3x  ETA 00:04:52
 ```
@@ -130,7 +130,7 @@ Run it with no arguments at all and it will ask for a link or channel name.
 | --- | --- |
 | `-q, --quality <q>` | `best` (default), `worst`, or an exact variant: `1080p60`, `720p60`, `720`, … |
 | `--qualities` | list what this VOD offers, then exit |
-| `-o, --output <file>` | output filename (default: `<channel> - <date> - <title> [<quality>].mp4`) |
+| `-o, --output <file>` | output filename (default: `<channel> - <date> - <title>.mp4`) |
 | `-d, --dir <dir>` | output directory (default: `$KICK_VOD_DIR`, otherwise the current directory) |
 | `--channel-dir` | save into a per-channel subdirectory of the output directory |
 | `--from <time>` | start at this position, e.g. `01:12:30` |
@@ -192,17 +192,23 @@ echo 'export KICK_VOD_DIR="$HOME/Videos/kick"' >> ~/.bashrc
 `--dir` always overrides it, and `--channel-dir` adds a per-channel subdirectory:
 
 ```
-~/Videos/kick/xmerghani/xmerghani - 2026-08-07 - LAST DANCE GTA RP [1080p60].mp4
+~/Videos/kick/xmerghani/xmerghani - 2026-08-07 - LAST DANCE GTA RP.mp4
 ```
 
-Filenames are built as `<channel> - <date> - <title> [<quality>].mp4`. Stream titles
+Filenames are built as `<channel> - <date> - <title>.mp4`. Stream titles
 tend to end in a run of chat commands that describe nothing, so those are stripped,
 along with exclamation marks (which upset shell history expansion) and anything a
-filesystem rejects. Accented characters are kept — `STREAMERÓW` stays `STREAMERÓW`.
+filesystem rejects.
+
+Accents are folded to plain ASCII, so names survive being moved between
+filesystems, shells and machines: `STREAMERÓW` → `STREAMEROW`, `Łódź` → `Lodz`,
+`Straße` → `Strasse`. Scripts with no ASCII equivalent — Cyrillic, Greek, CJK —
+are left as they are, since folding them would destroy the name rather than
+simplify it.
 
 ```
 before:  LAST DANCE GTA RP - STREFA.RP [DAY 1]| !sklep !skins !holy !swap !steel
-after:   xmerghani - 2026-08-07 - LAST DANCE GTA RP - STREFA.RP [DAY 1] [1080p60].mp4
+after:   xmerghani - 2026-08-07 - LAST DANCE GTA RP - STREFA.RP [DAY 1].mp4
 ```
 
 ---
