@@ -2,7 +2,7 @@
 
 **Download VODs and clips from [kick.com](https://kick.com) in full quality, straight to MP4.**
 
-Paste a link, get the file. No re-encoding, no quality cap, **no npm dependencies**.
+Paste a link, get the file. No re-encoding, no quality cap, **no required dependencies**.
 
 ```bash
 kick-vod https://kick.com/somechannel/videos/019fdd44-f600-7184-bf35-ff795a9b372c
@@ -44,8 +44,8 @@ that crashes on some systems, or install a full headless-browser framework
 This one:
 
 - **Always defaults to the best available quality** — 1080p60 if the stream had it
-- **Uses your ffmpeg**, so it works wherever ffmpeg works
-- **Zero npm dependencies** — it drives a Chrome you already have on disk
+- **Prefers your ffmpeg**, falling back to a bundled one, so it works either way
+- **No required npm dependencies** — it drives a Chrome you already have on disk
 - **Real progress reporting**, because it knows the VOD duration up front
 - **Grabs just a slice** of an 8-hour stream with `--from` / `--to`
 - **Understands both old and new Kick links**, including the new UUIDv7 ids
@@ -58,11 +58,17 @@ This one:
 | Tool | Why it's needed | Install |
 | --- | --- | --- |
 | **Node.js ≥ 18** | runtime | [nodejs.org](https://nodejs.org) |
-| **ffmpeg** | downloads the HLS stream and writes the MP4 | `apt install ffmpeg` · `brew install ffmpeg` · `winget install ffmpeg` |
+| **ffmpeg** | downloads the HLS stream and writes the MP4 | comes with `npm install` — see below |
 | **Chrome / Chromium** | Kick's API sits behind Cloudflare, which rejects non-browser clients | `apt install chromium-browser`, or any Chrome / Brave / Edge you already have |
 
-Both are auto-detected — including a Chrome that Puppeteer downloaded for some other
-project. Override either with an environment variable:
+**ffmpeg is included.** `ffmpeg-static` is an optional dependency, so a normal
+install brings a working binary with it and there is nothing else to set up. A
+system ffmpeg is still **preferred** when present, because the prebuilt static
+builds crash on some systems — WSL2 in particular. Skip the download entirely
+with `npm install --omit=optional` if you would rather use your own.
+
+Both tools are auto-detected — including a Chrome that Puppeteer downloaded for
+some other project. Override either with an environment variable:
 
 ```bash
 export CHROME_PATH=/usr/bin/chromium
@@ -88,6 +94,7 @@ npx @puppeteer/browsers install chrome@stable
 ```bash
 git clone https://github.com/SwierczKacper/kick-vod.git
 cd kick-vod
+npm install         # fetches the bundled ffmpeg; skip with --omit=optional
 npm link            # puts `kick-vod` on your PATH
 kick-vod --help
 ```
@@ -96,7 +103,7 @@ To remove it later: `npm unlink -g kick-vod`.
 
 ### Option 2 — run it in place
 
-Nothing to install, nothing to build:
+No build step, and `npm install` is only needed if you want the bundled ffmpeg:
 
 ```bash
 git clone https://github.com/SwierczKacper/kick-vod.git
@@ -362,7 +369,8 @@ an issue.
 
 Issues and pull requests are welcome — especially fixes for Kick API changes.
 There is no build step: clone it, edit it, run `node bin/kick-vod.js` to try it.
-Please keep the project dependency-free.
+Please add no required dependencies — the only one is `ffmpeg-static`, and it is
+optional precisely so the tool still works when it is absent.
 
 Tests use the built-in Node test runner, so there is still nothing to install:
 
