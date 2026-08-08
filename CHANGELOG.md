@@ -2,6 +2,11 @@
 
 ## 1.3.0
 
+- Add a live smoke test (`npm run smoke`) that exercises the real path: reads
+  the Kick API through Chrome, resolves a VOD from whichever of a few channels
+  answers first, and copies ~12 seconds of the lowest quality before deleting
+  it. Runs weekly in CI and on demand, deliberately not on pull requests, since
+  the offline suite never touches Kick and so cannot catch an API change.
 - Ship a working ffmpeg. `ffmpeg-static` is now an optional dependency, so
   `npm install` produces a tool that runs with nothing else to set up.
   A system ffmpeg still takes priority — detection order is `FFMPEG_PATH`, then
