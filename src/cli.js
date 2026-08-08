@@ -1,5 +1,6 @@
 import { mkdirSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 
 import { HELP_TEXT, parseArgs } from './args.js';
@@ -12,8 +13,8 @@ import {
 	formatBytes,
 	formatDate,
 	formatDuration,
+	formatProgress,
 	info,
-	progressBar,
 	success,
 	warn,
 } from './ui.js';
@@ -149,35 +150,79 @@ function parseTimeRange(options) {
 	return { from, to };
 }
 
-function makeProgressReporter(enabled) {
+/**
+ * Progress display. Returns the callback ffmpeg drives plus a done() that
+ * leaves the terminal tidy.
+ *
+ * The download rate is measured here rather than taken from ffmpeg, which only
+ * reports a multiple of realtime — true, but not what someone watching a
+ * multi-gigabyte transfer wants to know. It is smoothed, because raw deltas
+ * between 200 ms repaints jump around too much to read.
+ */
+function makeProgressReporter({ enabled, totalSeconds, estimatedBytes }) {
 	if (!enabled || !process.stderr.isTTY) {
 		let lastLogged = 0;
-		return (stats) => {
-			// Non-TTY: one line every 30s of media so logs stay readable.
-			if (stats.seconds - lastLogged < 30) return;
-			lastLogged = stats.seconds;
-			info(`${formatDuration(stats.seconds)} · ${formatBytes(stats.bytes)} · ${stats.speed.toFixed(1)}x`);
+		return {
+			onProgress: (stats) => {
+				// Non-TTY: one line every 30s of media so logs stay readable.
+				if (stats.seconds - lastLogged < 30) return;
+				lastLogged = stats.seconds;
+				info(`${formatDuration(stats.seconds)} · ${formatBytes(stats.bytes)} · ${stats.speed.toFixed(1)}x`);
+			},
+			done: () => {},
 		};
 	}
 
+	const out = process.stderr;
 	let lastPaint = 0;
-	return (stats) => {
-		const now = Date.now();
-		if (now - lastPaint < 200) return;
-		lastPaint = now;
+	let lastBytes = 0;
+	let lastSampleAt = Date.now();
+	let rate = 0;
+	let painted = 0;
 
-		const pieces = [];
-		if (stats.ratio != null) {
-			pieces.push(progressBar(stats.ratio), `${(stats.ratio * 100).toFixed(1)}%`);
-		}
-		pieces.push(formatDuration(stats.seconds), formatBytes(stats.bytes), `${stats.speed.toFixed(1)}x`);
+	const clear = () => {
+		if (painted === 0) return;
+		readline.moveCursor(out, 0, -(painted - 1));
+		readline.cursorTo(out, 0);
+		readline.clearScreenDown(out);
+		painted = 0;
+	};
 
-		if (stats.ratio != null && stats.speed > 0) {
-			const remaining = (stats.seconds / stats.ratio - stats.seconds) / stats.speed;
-			pieces.push(`ETA ${formatDuration(remaining)}`);
-		}
+	return {
+		onProgress: (stats) => {
+			const now = Date.now();
+			if (now - lastPaint < 200) return;
 
-		process.stderr.write(`\r\x1b[K  ${pieces.join('  ')}`);
+			const elapsed = (now - lastSampleAt) / 1000;
+			if (elapsed > 0 && stats.bytes >= lastBytes) {
+				const sample = (stats.bytes - lastBytes) / elapsed;
+				// Exponential smoothing: responsive to real changes, not to jitter.
+				rate = rate === 0 ? sample : rate * 0.7 + sample * 0.3;
+			}
+			lastBytes = stats.bytes;
+			lastSampleAt = now;
+			lastPaint = now;
+
+			// Once underway, extrapolating from what has actually arrived beats the
+			// playlist's advertised bitrate, which is a peak figure.
+			const projected = stats.ratio > 0.02 && stats.bytes > 0 ? stats.bytes / stats.ratio : estimatedBytes;
+
+			const lines = formatProgress({
+				ratio: stats.ratio,
+				seconds: stats.seconds,
+				totalSeconds,
+				bytes: stats.bytes,
+				totalBytes: projected,
+				rate,
+				speed: stats.speed,
+				width: out.columns || 80,
+			});
+
+			clear();
+			out.write(lines.join('\n'));
+			painted = lines.length;
+		},
+		done: clear,
 	};
 }
 
@@ -332,6 +377,12 @@ export async function run(argv) {
 		}
 	}
 
+	const reporter = makeProgressReporter({
+		enabled: options.progress,
+		totalSeconds: sliceSeconds > 0 ? sliceSeconds : null,
+		estimatedBytes: estimate,
+	});
+
 	const result = await download({
 		url: sourceUrl,
 		output: outputPath,
@@ -339,10 +390,10 @@ export async function run(argv) {
 		from,
 		to,
 		faststart: options.faststart,
-		onProgress: makeProgressReporter(options.progress),
+		onProgress: reporter.onProgress,
 	});
 
-	if (process.stderr.isTTY && options.progress) process.stderr.write('\r\x1b[K');
+	reporter.done();
 
 	let size = 0;
 	try {

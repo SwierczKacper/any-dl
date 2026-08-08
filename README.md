@@ -24,7 +24,25 @@ kick-vod https://kick.com/somechannel/videos/019fdd44-f600-7184-bf35-ff795a9b372
 Pick one with a single keypress and it starts, showing what it is actually doing:
 
 ```
-  ███████████░░░░░░░░░░░░░  44.2%  00:26:30  1.5 GB  78.3x  ETA 00:00:25
+  ████████████████░░░░░░░░   65.9%   ETA 00:00:13
+  00:39:06 / 01:00:00   2.2 GB / ~3.4 GB   96.4 MB/s   93.0x realtime
+```
+
+Or give it a channel name and choose from its recent streams:
+
+```bash
+kick-vod xmerghani
+```
+
+```
+› Fetching VODs for xmerghani…
+? Select a VOD — ↑/↓ move, Enter select, q quit
+❯ LAST DANCE GTA RP - STREFA.RP [DAY 1]| !sklep !skins !holy !swap !steel  (08:07:45)
+    2026-08-07 19:28 · 08:07:45 · Just Chatting · 87,544 views
+  MECCHA CAMELEON NA DELEGACJI | !sklep !skins !holy !swap !steel  (01:59:29)
+  WIELKI UPDATE DO GOLFA - BITWA STREAMERÓW | !sklep !skins !holy !swap !steel  (01:45:05)
+  TIK-TOKI, GIVEAWAYE I ZAWIJKA | !sklep !skins !holy !swap !steel  (01:34:45)
+  nowy rematch działa | !sklep !skins !holy !swap !steel  (02:37:03)
 ```
 
 > **Not affiliated with Kick.** Please read [Legal & disclaimer](#️-legal--disclaimer) before use.
@@ -293,6 +311,18 @@ bitrate, and `--quality` selects one.
 there is **no re-encoding**: bit-for-bit the same video and audio Kick served.
 Progress comes from ffmpeg's `-progress pipe:1` output, and since the VOD duration
 is known in advance, the percentage and ETA are real rather than guessed.
+
+```
+  ████████████████░░░░░░░░   65.9%   ETA 00:00:13
+  00:39:06 / 01:00:00   2.2 GB / ~3.4 GB   96.4 MB/s   93.0x realtime
+```
+
+Reading left to right on the second line: how much of the requested range has
+been written, how large the file is against its projected final size, the
+transfer rate, and how much faster than realtime the copy is running. The
+projected size is extrapolated from bytes actually received rather than the
+playlist's advertised bitrate, so it sharpens as the download proceeds. On a
+terminal under 72 columns this collapses to a single compact line.
 
 ### Project layout
 

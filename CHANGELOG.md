@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.7.0
+
+- Rework the progress display. It now shows position against the requested
+  range, downloaded bytes against a projected total, and the actual transfer
+  rate in MB/s — previously it reported only a position, a running total and a
+  multiple of realtime, which said little about how big the file would get.
+  Laid out over two lines when the terminal has room, one when it does not.
+- Project the final size from bytes actually received rather than the playlist
+  bitrate, so the figure sharpens as the download proceeds.
+- Document the channel-name flow in the README, with the VOD picker.
+
 ## 1.6.1
 
 - Bring the README up to date with the current flow. The sample output at the
