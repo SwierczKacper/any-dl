@@ -274,6 +274,11 @@ on the first run.
 The stream is private, was deleted, or Kick has pruned it. If you passed a bare
 new-style id, use the full link that includes the channel name instead.
 
+**`ffmpeg produced an empty file — nothing was downloaded.`**
+The `--from`/`--to` range was shorter than the distance to the next keyframe.
+Nothing is re-encoded, so copying can only start at a keyframe, and a range of a
+few seconds can fall entirely between two of them. Ask for 10 seconds or more.
+
 **Kick CDN returns HTTP 404**
 Old VODs get pruned by Kick. Nothing can be done about that.
 
