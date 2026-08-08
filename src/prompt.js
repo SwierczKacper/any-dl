@@ -12,10 +12,14 @@ function terminalWidth() {
 	return process.stderr.columns || 80;
 }
 
-/** Cut a raw (uncoloured) string so a rendered line never wraps. */
-function fit(text, reserved = 4) {
+/**
+ * Cut a raw (uncoloured) string so a rendered line never wraps. Only line
+ * breaks and tabs are flattened — runs of spaces are load-bearing, since
+ * callers use them to align columns.
+ */
+export function fit(text, reserved = 4) {
 	const max = Math.max(20, terminalWidth() - reserved);
-	const flat = String(text).replace(/\s+/g, ' ');
+	const flat = String(text).replace(/[\r\n\t]+/g, ' ');
 	return flat.length > max ? `${flat.slice(0, max - 1)}…` : flat;
 }
 

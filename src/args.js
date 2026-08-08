@@ -37,7 +37,8 @@ Targets
   <uuid>                                     a VOD by id
 
 Options
-  -q, --quality <q>   best (default), worst, or an exact variant like 1080p60 / 720
+  -q, --quality <q>   best, worst, or an exact variant like 1080p60 / 720
+                      (omit it and you get a picker showing sizes)
       --qualities     list the available qualities for the target and exit
   -o, --output <file> output filename
                       (default: "<channel> - <date> - <title>.mp4")
@@ -74,7 +75,8 @@ See the README for the full disclaimer.
 export function parseArgs(argv) {
 	const options = {
 		target: null,
-		quality: 'best',
+		// null means "ask" — an explicit --quality skips the picker.
+		quality: null,
 		output: null,
 		// Left null so the caller can fall back to KICK_VOD_DIR before the cwd.
 		dir: null,

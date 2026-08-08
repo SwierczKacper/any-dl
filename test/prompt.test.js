@@ -3,6 +3,8 @@ import { spawn, spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
+import { fit } from '../src/prompt.js';
+
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const RUNNER = 'scripts/prompt-runner.mjs';
 
@@ -63,4 +65,18 @@ test('input returns the typed text', { skip: SKIP, timeout: 30_000 }, async () =
 
 test('input returns null when nothing is typed', { skip: SKIP, timeout: 30_000 }, async () => {
 	assert.match(await runPrompt('input', '\n'), /RESULT=null/);
+});
+
+test('fit keeps runs of spaces, because callers align columns with them', () => {
+	assert.equal(fit('1080p60  1920x1080  8.66 Mbps'), '1080p60  1920x1080  8.66 Mbps');
+});
+
+test('fit flattens line breaks and tabs', () => {
+	assert.equal(fit('two\nlines\there'), 'two lines here');
+});
+
+test('fit truncates rather than letting a line wrap', () => {
+	const result = fit('x'.repeat(500), 4);
+	assert.ok(result.length < 500);
+	assert.ok(result.endsWith('…'));
 });

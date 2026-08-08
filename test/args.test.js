@@ -6,7 +6,7 @@ import { parseArgs } from '../src/args.js';
 test('parseArgs defaults to the best quality and the current directory', () => {
 	const options = parseArgs(['xmerghani']);
 	assert.equal(options.target, 'xmerghani');
-	assert.equal(options.quality, 'best');
+	assert.equal(options.quality, null);
 	assert.equal(options.dir, null);
 	assert.equal(options.channelDir, false);
 	assert.equal(options.yes, false);
