@@ -167,7 +167,12 @@ function makeProgressReporter({ enabled, totalSeconds, estimatedBytes }) {
 				// Non-TTY: one line every 30s of media so logs stay readable.
 				if (stats.seconds - lastLogged < 30) return;
 				lastLogged = stats.seconds;
-				info(`${formatDuration(stats.seconds)} · ${formatBytes(stats.bytes)} · ${stats.speed.toFixed(1)}x`);
+				// Not a terminal: piped, redirected or under cron. Nobody is reading
+				// this live, so the technical detail is worth keeping here even
+				// though it was dropped from the interactive display.
+				info(
+					`${formatDuration(stats.seconds)} · ${formatBytes(stats.bytes)} · ${stats.speed.toFixed(1)}x realtime`
+				);
 			},
 			done: () => {},
 		};

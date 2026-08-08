@@ -24,8 +24,8 @@ kick-vod https://kick.com/somechannel/videos/019fdd44-f600-7184-bf35-ff795a9b372
 Pick one with a single keypress and it starts, showing what it is actually doing:
 
 ```
-  ████████████████░░░░░░░░   65.9%   ETA 00:00:13
-  00:39:06 / 01:00:00   2.2 GB / ~3.4 GB   96.4 MB/s   93.0x realtime
+  █████████░░░░░░░░░░░░░░░   35.6%   ETA 00:00:43
+  00:21:22 / 01:00:00   1.2 GB / ~3.4 GB   89.0 MB/s
 ```
 
 Or give it a channel name and choose from its recent streams:
@@ -313,16 +313,24 @@ Progress comes from ffmpeg's `-progress pipe:1` output, and since the VOD durati
 is known in advance, the percentage and ETA are real rather than guessed.
 
 ```
-  ████████████████░░░░░░░░   65.9%   ETA 00:00:13
-  00:39:06 / 01:00:00   2.2 GB / ~3.4 GB   96.4 MB/s   93.0x realtime
+  █████████░░░░░░░░░░░░░░░   35.6%   ETA 00:00:43
+  00:21:22 / 01:00:00   1.2 GB / ~3.4 GB   89.0 MB/s
 ```
 
 Reading left to right on the second line: how much of the requested range has
-been written, how large the file is against its projected final size, the
-transfer rate, and how much faster than realtime the copy is running. The
-projected size is extrapolated from bytes actually received rather than the
-playlist's advertised bitrate, so it sharpens as the download proceeds. On a
-terminal under 72 columns this collapses to a single compact line.
+been written, how large the file is against its projected final size, and the
+transfer rate. The projected size is extrapolated from bytes actually received
+rather than the playlist's advertised bitrate, so it sharpens as the download
+proceeds. On a terminal under 72 columns this collapses to a single compact line.
+
+ffmpeg also reports a multiple of realtime — how many seconds of video it writes
+per second of waiting. That drives the ETA but is not displayed, since it means
+nothing without knowing what it measures. It does appear when output is not a
+terminal, where the reader is a log rather than a person:
+
+```
+› 00:03:36 · 35.3 MB · 49.2x realtime
+```
 
 ### Project layout
 

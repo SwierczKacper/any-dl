@@ -78,7 +78,10 @@ export function formatProgress({ ratio, seconds, totalSeconds, bytes, totalBytes
 		: formatDuration(seconds);
 	const size = totalBytes ? `${formatBytes(bytes)} / ~${formatBytes(totalBytes)}` : formatBytes(bytes);
 	const rateText = formatRate(rate);
-	const realtime = speed > 0 ? `${speed.toFixed(1)}x realtime` : '';
+
+	// `speed` drives the ETA but is not shown: ffmpeg reports it as a multiple of
+	// realtime, which means nothing without knowing what that measures — and the
+	// transfer rate already says how fast this is going.
 
 	if (width < 72) {
 		return [`  ${[percent, size, rateText, eta].filter(Boolean).join('  ')}`];
@@ -86,6 +89,6 @@ export function formatProgress({ ratio, seconds, totalSeconds, bytes, totalBytes
 
 	return [
 		`  ${progressBar(ratio ?? 0)}  ${percent.padStart(6)}   ${eta}`,
-		`  ${[position, size, rateText, realtime].filter(Boolean).join('   ')}`,
+		`  ${[position, size, rateText].filter(Boolean).join('   ')}`,
 	];
 }

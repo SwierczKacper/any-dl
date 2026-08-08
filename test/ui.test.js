@@ -27,7 +27,12 @@ test('formatProgress shows position, size and rate on two lines', () => {
 	assert.match(lines[1], /01:19:27 \/ 08:07:45/);
 	assert.match(lines[1], /4\.5 GB \/ ~27\.6 GB/);
 	assert.match(lines[1], /MB\/s/);
-	assert.match(lines[1], /93\.7x realtime/);
+
+	// The realtime multiple is deliberately absent: it is jargon to anyone who
+	// does not already know what it measures, and the transfer rate above
+	// already answers "how fast is this going".
+	assert.ok(!lines.join(' ').includes('realtime'));
+	assert.ok(!lines.join(' ').includes('93.7'));
 });
 
 test('formatProgress falls back to one line on a narrow terminal', () => {
