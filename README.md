@@ -2,9 +2,14 @@
 
 **Download VODs and clips from [kick.com](https://kick.com) in full quality, straight to MP4.**
 
+[![npm](https://img.shields.io/npm/v/kick-vod)](https://www.npmjs.com/package/kick-vod)
 [![CI](https://github.com/SwierczKacper/kick-vod/actions/workflows/ci.yml/badge.svg)](https://github.com/SwierczKacper/kick-vod/actions/workflows/ci.yml)
 [![Node.js 18+](https://img.shields.io/badge/node-%E2%89%A518-brightgreen)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
+```bash
+npm install -g kick-vod
+```
 
 Paste a link, get the file. No re-encoding, no quality cap, **no required dependencies**.
 
@@ -142,27 +147,36 @@ npx @puppeteer/browsers install chrome@stable
 
 ## Install
 
-### Option 1 — clone and link (recommended)
+### From npm (recommended)
 
 ```bash
-git clone https://github.com/SwierczKacper/kick-vod.git
-cd kick-vod
-npm install         # fetches the bundled ffmpeg; skip with --omit=optional
-npm link            # puts `kick-vod` on your PATH
+npm install -g kick-vod
 kick-vod --help
 ```
 
-To remove it later: `npm unlink -g kick-vod`.
+That is everything — a working ffmpeg comes with it. Add `--omit=optional` to
+skip the bundled binary and use your own. To remove it later:
+`npm uninstall -g kick-vod`.
 
-### Option 2 — run it in place
+Or run it once without installing anything:
 
-No build step, and `npm install` is only needed if you want the bundled ffmpeg:
+```bash
+npx kick-vod <url>
+```
+
+### From source
+
+For hacking on it, or if you would rather not install from a registry:
 
 ```bash
 git clone https://github.com/SwierczKacper/kick-vod.git
 cd kick-vod
-node bin/kick-vod.js --help
+npm install         # optional bundled ffmpeg
+npm link            # puts `kick-vod` on your PATH
 ```
+
+There is no build step, so `node bin/kick-vod.js --help` works straight from the
+clone as well.
 
 ---
 
