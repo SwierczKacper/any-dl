@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.8.1
+
+- Published to npm: install with npm install -g kick-vod, or run it once with
+  npx kick-vod. The README leads with that rather than with cloning the repo.
+- Fix the package description, which still claimed no npm dependencies — untrue
+  since ffmpeg-static was added as an optional one, and visible on the npm page.
+- Normalise the bin path, which npm was silently correcting on every publish.
+
 ## 1.8.0
 
 - Add issue templates, a contributing guide and a prominent invitation in the
