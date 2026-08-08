@@ -206,6 +206,20 @@ They are derived from the playlist's advertised bitrate, which is a *peak*
 figure, so expect the real file to come in a few per cent under. Picking an entry
 starts the download — there is no second confirmation.
 
+Free disk space is checked against those estimates, and anything that will not
+fit is called out before you commit to it:
+
+```
+? Select quality (7.8 GB free) — ↑/↓ move, Enter select, q quit
+❯ 1080p60  1920x1080  8.66 Mbps    ~29.5 GB   — not enough space
+  720p60   1280x720   3.33 Mbps    ~11.4 GB   — not enough space
+  480p30   852x480    1.34 Mbps     ~4.6 GB
+```
+
+Choosing one of those asks for confirmation, defaulting to no. With `--yes` or no
+terminal there is nobody to ask, so it fails instead of filling the disk. If the
+free space cannot be read, the check is skipped rather than guessed at.
+
 Passing `--quality` skips the list entirely, as do `--yes` and any run without a
 terminal, which keeps scripts and CI working exactly as before.
 

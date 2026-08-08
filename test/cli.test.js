@@ -75,3 +75,23 @@ test('qualityChoices copes with an unknown duration', () => {
 	assert.match(choices[0].name, /1080p60/);
 	assert.ok(!choices[0].name.includes('~'));
 });
+
+test('qualityChoices flags variants that will not fit on disk', () => {
+	const oneGigabyte = 1024 ** 3;
+	const choices = qualityChoices(VARIANTS, 3600, oneGigabyte);
+
+	assert.match(choices[0].name, /not enough space/); // ~3.6 GB
+	assert.match(choices[1].name, /not enough space/); // ~1.4 GB
+	assert.ok(!choices[2].name.includes('not enough space')); // ~98.7 MB fits
+});
+
+test('qualityChoices says nothing about space when it is unknown', () => {
+	for (const choice of qualityChoices(VARIANTS, 3600, null)) {
+		assert.ok(!choice.name.includes('not enough space'));
+	}
+});
+
+test('qualityChoices drops the recommendation marker when that variant will not fit', () => {
+	const choices = qualityChoices(VARIANTS, 3600, 1024 ** 3);
+	assert.ok(!choices[0].name.includes('(recommended)'));
+});

@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import test from 'node:test';
 
 import {
+	freeSpaceBytes,
 	isUuid,
 	normalizeTitle,
 	parseKickDate,
@@ -195,4 +196,15 @@ test('sanitizeFilename leaves non-Latin scripts alone', () => {
 	// Folding these would destroy the name rather than simplify it.
 	assert.equal(sanitizeFilename('Привет мир'), 'Привет мир');
 	assert.equal(sanitizeFilename('日本語のタイトル'), '日本語のタイトル');
+});
+
+test('freeSpaceBytes reports something plausible for a real directory', () => {
+	const free = freeSpaceBytes(tmpdir());
+	assert.equal(typeof free, 'number');
+	assert.ok(free > 0, 'a writable temp directory should have some space');
+});
+
+test('freeSpaceBytes returns null rather than guessing for a bad path', () => {
+	// Callers must treat null as "unknown", never as "no space left".
+	assert.equal(freeSpaceBytes('/no/such/path/anywhere-12345'), null);
 });

@@ -18,6 +18,7 @@ import {
 	warn,
 } from './ui.js';
 import {
+	freeSpaceBytes,
 	normalizeTitle,
 	parseTimecode,
 	resolveOutputDir,
@@ -56,7 +57,7 @@ export function buildFilename(media) {
  * exercise — roughly what the file will weigh. Variants arrive best-first, so
  * the first entry is both the recommendation and the initial selection.
  */
-export function qualityChoices(variants, seconds) {
+export function qualityChoices(variants, seconds, freeBytes = null) {
 	const nameWidth = Math.max(...variants.map((variant) => variant.name.length));
 	const resolutionWidth = Math.max(
 		...variants.map((variant) => (variant.width && variant.height ? `${variant.width}x${variant.height}`.length : 7))
@@ -74,7 +75,11 @@ export function qualityChoices(variants, seconds) {
 			mbps.padStart(9),
 			size.padStart(10),
 		];
-		if (index === 0) columns.push(' (recommended)');
+
+		// Flagging this in the list is the whole point — better than finding out
+		// when the disk fills up an hour into a download.
+		if (bytes != null && freeBytes != null && bytes > freeBytes) columns.push(' — not enough space');
+		else if (index === 0) columns.push(' (recommended)');
 
 		return { name: columns.join('  '), value: variant };
 	});
@@ -267,6 +272,7 @@ export async function run(argv) {
 
 	// How much video is actually being fetched — what the size estimates describe.
 	const sliceSeconds = (to ?? media.durationSec ?? 0) - (from ?? 0);
+	const freeBytes = freeSpaceBytes(outputDir);
 
 	let variant = null;
 	let pickedFromList = false;
@@ -279,8 +285,8 @@ export async function run(argv) {
 		variant = selectVariant(variants, 'best');
 	} else {
 		variant = await select({
-			message: 'Select quality',
-			choices: qualityChoices(variants, sliceSeconds),
+			message: freeBytes != null ? `Select quality (${formatBytes(freeBytes)} free)` : 'Select quality',
+			choices: qualityChoices(variants, sliceSeconds, freeBytes),
 			pageSize: 8,
 		});
 		if (!variant) {
@@ -295,8 +301,30 @@ export async function run(argv) {
 
 	info(`Quality: ${c.bold(variant ? describeVariant(variant) : 'original (clip)')}`);
 
-	// Choosing from the list already was the confirmation.
-	if (!options.yes && !pickedFromList) {
+	// Catches the case the picker cannot: an explicit --quality, or a clip whose
+	// size was never estimated.
+	const estimate = estimateBytes(variant, sliceSeconds);
+	const tooBig = estimate != null && freeBytes != null && estimate > freeBytes;
+
+	if (tooBig) {
+		warn(
+			`This needs about ${formatBytes(estimate)} but only ${formatBytes(freeBytes)} is free on ${outputDir}.`
+		);
+
+		if (options.yes || !isInteractive()) {
+			throw new UserFacingError(
+				'Not enough free disk space.',
+				'Free some space, pick a lower quality with --quality, or shorten the range with --from/--to.'
+			);
+		}
+
+		const proceed = await confirm({ message: 'Try anyway?', defaultValue: false });
+		if (!proceed) {
+			warn('Cancelled.');
+			return 130;
+		}
+	} else if (!options.yes && !pickedFromList) {
+		// Choosing from the list already was the confirmation.
 		const proceed = await confirm({ message: 'Start download?', defaultValue: true });
 		if (!proceed) {
 			warn('Cancelled.');
