@@ -123,19 +123,47 @@ export async function input({ message }) {
 	}
 }
 
-/** Yes/no question. Returns the default when stdin is not a TTY. */
-export async function confirm({ message, defaultValue = true }) {
-	if (!isInteractive()) return defaultValue;
+/**
+ * Yes/no question answered by a single keypress — y, n, or Enter for the
+ * default. No Enter needed after the letter.
+ *
+ * Returns the default when stdin is not a TTY, so piped and scripted runs
+ * behave exactly as before.
+ */
+export function confirm({ message, defaultValue = true }) {
+	if (!isInteractive()) return Promise.resolve(defaultValue);
 
-	const rl = createInterface({ input: process.stdin, output: process.stderr });
-	const suffix = defaultValue ? 'Y/n' : 'y/N';
+	return new Promise((resolve) => {
+		const out = process.stderr;
+		const suffix = defaultValue ? 'Y/n' : 'y/N';
+		out.write(`${c.cyan('?')} ${c.bold(message)} ${c.gray(`(${suffix})`)} `);
 
-	try {
-		const answer = await rl.question(`${c.cyan('?')} ${c.bold(message)} ${c.gray(`(${suffix})`)} `);
-		const normalized = answer.trim().toLowerCase();
-		if (!normalized) return defaultValue;
-		return normalized === 'y' || normalized === 'yes';
-	} finally {
-		rl.close();
-	}
+		readline.emitKeypressEvents(process.stdin);
+		process.stdin.setRawMode(true);
+		process.stdin.resume();
+
+		const finish = (value) => {
+			process.stdin.off('keypress', onKeypress);
+			process.stdin.setRawMode(false);
+			process.stdin.pause();
+			// Echo the answer, since raw mode does not.
+			out.write(`${value ? 'y' : 'n'}\n`);
+			resolve(value);
+		};
+
+		const onKeypress = (_str, key) => {
+			if (!key) return;
+
+			// Raw mode swallows Ctrl+C, so treat it as a refusal ourselves.
+			// Escape is deliberately not handled: readline cannot tell a lone ESC
+			// from the start of an arrow-key sequence, so it never fires on its own.
+			if (key.ctrl && key.name === 'c') return finish(false);
+			if (key.name === 'y') return finish(true);
+			if (key.name === 'n') return finish(false);
+			if (key.name === 'return' || key.name === 'enter') return finish(defaultValue);
+			// Anything else: keep waiting rather than guessing.
+		};
+
+		process.stdin.on('keypress', onKeypress);
+	});
 }
