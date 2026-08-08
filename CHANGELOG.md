@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.9.0
+
+- Add --progress json, emitting NDJSON on stdout for programs driving the tool
+  rather than people watching it. Nothing else is written to stdout in that
+  mode, so the stream can be read line by line.
+- Add --list --json, so a channel listing can be polled for new streams without
+  parsing text meant for humans.
+- --no-progress is now an alias for --progress none, and keeps working.
+
 ## 1.8.2
 
 - Publish to npm automatically when a release tag is pushed, using npm trusted

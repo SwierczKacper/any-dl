@@ -10,7 +10,7 @@ test('parseArgs defaults to the best quality and the current directory', () => {
 	assert.equal(options.dir, null);
 	assert.equal(options.channelDir, false);
 	assert.equal(options.yes, false);
-	assert.equal(options.progress, true);
+	assert.equal(options.progress, 'auto');
 });
 
 test('parseArgs accepts short and long option names', () => {
@@ -28,7 +28,7 @@ test('parseArgs handles flags', () => {
 	assert.equal(options.clips, true);
 	assert.equal(options.yes, true);
 	assert.equal(options.json, true);
-	assert.equal(options.progress, false);
+	assert.equal(options.progress, 'none');
 	assert.equal(options.faststart, true);
 	assert.equal(options.channelDir, true);
 });
@@ -61,4 +61,23 @@ test('parseArgs allows no target at all', () => {
 	assert.equal(parseArgs([]).target, null);
 	assert.equal(parseArgs(['--help']).help, true);
 	assert.equal(parseArgs(['-v']).version, true);
+});
+
+test('parseArgs defaults progress to auto', () => {
+	assert.equal(parseArgs(['x']).progress, 'auto');
+});
+
+test('parseArgs accepts the progress modes', () => {
+	assert.equal(parseArgs(['x', '--progress', 'json']).progress, 'json');
+	assert.equal(parseArgs(['x', '--progress', 'none']).progress, 'none');
+	assert.equal(parseArgs(['x', '--progress=json']).progress, 'json');
+});
+
+test('parseArgs keeps --no-progress working as an alias', () => {
+	// It shipped in earlier versions, so it must not break.
+	assert.equal(parseArgs(['x', '--no-progress']).progress, 'none');
+});
+
+test('parseArgs rejects an unknown progress mode', () => {
+	assert.throws(() => parseArgs(['x', '--progress', 'bogus']), /--progress must be one of/);
 });
