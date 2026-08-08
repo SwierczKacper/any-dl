@@ -9,12 +9,22 @@ kick-vod https://kick.com/somechannel/videos/019fdd44-f600-7184-bf35-ff795a9b372
 ```
 
 ```
-› LAST DANCE GTA RP - STREFA.RP [DAY 1]
-› 2026-08-07 19:28 · 08:07:45 · Just Chatting · 87,528 views
-› Quality: 1080p60 (1920x1080, 8.66 Mbps)
-› File:    xmerghani - 2026-08-07 - LAST DANCE GTA RP.mp4
+› LAST DANCE GTA RP - STREFA.RP [DAY 1]| !sklep !skins !holy !swap !steel
+› 2026-08-07 19:28 · 08:07:45 · Just Chatting · 87,544 views
+› File:    xmerghani - 2026-08-07 - LAST DANCE GTA RP - STREFA.RP [DAY 1].mp4
 
-  ████████████░░░░░░░░░░░░  52.4%  04:15:31  6.2 GB  47.3x  ETA 00:04:52
+? Select quality (82.7 GB free) — ↑/↓ move, Enter select, q quit
+❯ 1080p60  1920x1080  8.66 Mbps    ~29.5 GB   (recommended)
+  720p60   1280x720   3.33 Mbps    ~11.4 GB
+  480p30   852x480    1.34 Mbps     ~4.6 GB
+  360p30   640x360    0.63 Mbps     ~2.1 GB
+  160p30   284x160    0.23 Mbps   ~802.4 MB
+```
+
+Pick one with a single keypress and it starts, showing what it is actually doing:
+
+```
+  ███████████░░░░░░░░░░░░░  44.2%  00:26:30  1.5 GB  78.3x  ETA 00:00:25
 ```
 
 > **Not affiliated with Kick.** Please read [Legal & disclaimer](#️-legal--disclaimer) before use.
@@ -43,7 +53,8 @@ that crashes on some systems, or install a full headless-browser framework
 
 This one:
 
-- **Always defaults to the best available quality** — 1080p60 if the stream had it
+- **Offers every quality up to 1080p60**, with the best one preselected
+- **Tells you the size before you commit**, and warns when it will not fit on disk
 - **Prefers your ffmpeg**, falling back to a bundled one, so it works either way
 - **No required npm dependencies** — it drives a Chrome you already have on disk
 - **Real progress reporting**, because it knows the VOD duration up front
@@ -136,7 +147,7 @@ Run it with no arguments at all and it will ask for a link or channel name.
 | Option | Description |
 | --- | --- |
 | `-q, --quality <q>` | `best`, `worst`, or an exact variant: `1080p60`, `720p60`, `720`, … Omit it to pick from a list |
-| `--qualities` | list what this VOD offers, then exit |
+| `--qualities` | list what this VOD offers, with estimated sizes, then exit |
 | `-o, --output <file>` | output filename (default: `<channel> - <date> - <title>.mp4`) |
 | `-d, --dir <dir>` | output directory (default: `$KICK_VOD_DIR`, otherwise the current directory) |
 | `--channel-dir` | save into a per-channel subdirectory of the output directory |
@@ -146,7 +157,7 @@ Run it with no arguments at all and it will ask for a link or channel name.
 | `-l, --list` | print the channel's VODs/clips and exit |
 | `-n, --limit <n>` | how many entries to list (default: 20) |
 | `--faststart` | move the MP4 index to the front — nicer for streaming, slow on huge files |
-| `-y, --yes` | skip the confirmation prompt |
+| `-y, --yes` | no prompts: takes the best quality, and fails rather than asking if it will not fit |
 | `--json` | print metadata + the direct stream URL to stdout instead of downloading |
 | `--no-progress` | plain log lines instead of a progress bar (good for cron/CI) |
 | `-h, --help` / `-v, --version` | help / version |
@@ -184,7 +195,7 @@ kick-vod <url> --json | jq -r .sourceUrl
 | --- | --- |
 | `0` | success |
 | `1` | error (bad arguments, VOD unavailable, ffmpeg failure, …) |
-| `130` | cancelled by the user (Ctrl+C, or "no" at the prompt) |
+| `130` | cancelled by the user (Ctrl+C, `q` in a picker, or "no" at a prompt) |
 
 ### Choosing a quality
 

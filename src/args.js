@@ -39,7 +39,7 @@ Targets
 Options
   -q, --quality <q>   best, worst, or an exact variant like 1080p60 / 720
                       (omit it and you get a picker showing sizes)
-      --qualities     list the available qualities for the target and exit
+      --qualities     list the available qualities and sizes, then exit
   -o, --output <file> output filename
                       (default: "<channel> - <date> - <title>.mp4")
   -d, --dir <dir>     output directory (default: $KICK_VOD_DIR, else current dir)
@@ -50,7 +50,7 @@ Options
   -l, --list          list the channel's VODs/clips and exit
   -n, --limit <n>     how many entries to list (default: 20)
       --faststart     move the MP4 index to the front (extra pass, slow on big files)
-  -y, --yes           do not ask for confirmation
+  -y, --yes           no prompts: best quality, and fail if it will not fit on disk
       --json          print machine-readable metadata to stdout instead of downloading
       --no-progress   plain log lines instead of a progress bar
   -h, --help          show this help
