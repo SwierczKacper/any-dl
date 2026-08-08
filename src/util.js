@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs';
+import fs, { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { extname, isAbsolute, join, resolve } from 'node:path';
 
@@ -110,6 +110,26 @@ export function resolveOutputDir({ dir, envDir, channel, perChannel = false, cwd
 	if (!perChannel || !channel) return absolute;
 
 	return join(absolute, sanitizeFilename(channel, 60));
+}
+
+/**
+ * Free space on the filesystem holding `path`, in bytes.
+ *
+ * Uses the space available to an unprivileged user, not the raw free blocks, so
+ * it matches what `df` reports. Returns null when it cannot be determined —
+ * statfsSync arrived in Node 18.15 — and callers must treat that as "unknown"
+ * rather than "no space".
+ */
+export function freeSpaceBytes(path) {
+	if (typeof fs.statfsSync !== 'function') return null;
+
+	try {
+		const { bavail, bsize } = fs.statfsSync(path);
+		const free = Number(bavail) * Number(bsize);
+		return Number.isFinite(free) && free >= 0 ? free : null;
+	} catch {
+		return null;
+	}
 }
 
 /** Append " (2)", " (3)", … until the path is free, so we never clobber a finished download. */

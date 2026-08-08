@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.6.0
+
+- Check free disk space before downloading. The quality picker shows how much
+  room is left and marks any variant that will not fit; if the chosen one is too
+  large, the download asks for confirmation first, defaulting to no.
+- Refuse outright rather than filling the disk when there is no one to ask —
+  with --yes or without a terminal, insufficient space is an error, not a prompt.
+  Space that cannot be determined is treated as unknown, never as empty.
+
 ## 1.5.0
 
 - Choose the quality from a list instead of silently taking the best one. It
