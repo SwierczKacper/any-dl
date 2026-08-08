@@ -1,0 +1,60 @@
+name: Publish to npm
+
+# Publishing is driven by the release tag, so the existing flow is unchanged:
+# merge, tag vX.Y.Z, push. This picks it up from there.
+#
+# No NPM_TOKEN is stored anywhere. npm's trusted publishing exchanges a
+# short-lived OIDC token from GitHub for publish rights, which means there is no
+# long-lived credential to leak — and it produces a provenance attestation, so
+# the npm page can show which commit and workflow built the package.
+#
+# This requires a trusted publisher configured on npmjs.com for this package,
+# pointing at this repository and this filename (publish.yml).
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      id-token: write # the OIDC token that stands in for a publish credential
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Trusted publishing needs Node 22.14+ and npm 11.5.1+.
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Use an npm new enough for trusted publishing
+        run: npm install -g npm@latest
+
+      # Refuse to publish a version that does not match the tag that triggered
+      # this — mismatches are silent and permanent once on the registry.
+      - name: Check the tag matches package.json
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG="$(node -p "require('./package.json').version")"
+          echo "tag: $TAG, package.json: $PKG"
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match package.json version $PKG"
+            exit 1
+          fi
+
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The same suite CI runs, because a tag is the last chance to catch this.
+      - name: Test
+        run: npm test
+
+      - name: Publish
+        run: npm publish

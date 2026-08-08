@@ -1,6 +1,6 @@
 {
   "name": "kick-vod",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "description": "Download Kick.com VODs and clips to MP4 in full quality (up to 1080p60). Fast CLI, no required dependencies, handles Kick's new UUIDv7 links.",
   "type": "module",
   "license": "MIT",

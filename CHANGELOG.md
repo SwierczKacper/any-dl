@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.8.2
+
+- Publish to npm automatically when a release tag is pushed, using npm trusted
+  publishing over OIDC — no long-lived token is stored anywhere, and the package
+  gets a provenance attestation tying it to the commit that built it. The
+  workflow refuses to publish if the tag and package.json version disagree.
+
 ## 1.8.1
 
 - Published to npm: install with npm install -g kick-vod, or run it once with
