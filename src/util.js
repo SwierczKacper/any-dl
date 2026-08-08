@@ -7,6 +7,33 @@ import { extname, isAbsolute, join, resolve } from 'node:path';
 const ILLEGAL_CHARS = '<>:"/\\|?*!';
 const RESERVED_WINDOWS_NAMES = /^(con|prn|aux|nul|com[1-9]|lpt[1-9])$/i;
 
+// Letters that carry no combining mark, so NFD alone cannot reduce them.
+const TRANSLITERATIONS = {
+	ł: 'l', Ł: 'L',
+	ø: 'o', Ø: 'O',
+	đ: 'd', Đ: 'D',
+	ð: 'd', Ð: 'D',
+	ß: 'ss',
+	æ: 'ae', Æ: 'AE',
+	œ: 'oe', Œ: 'OE',
+	þ: 'th', Þ: 'TH',
+	ı: 'i',
+};
+
+/**
+ * Reduce accented Latin letters to their plain form: ÓWKA → OWKA, żółć → zolc.
+ * Scripts with no ASCII equivalent — Cyrillic, Greek, CJK — are left untouched,
+ * because mangling them would be worse than keeping them.
+ */
+function foldDiacritics(text) {
+	let out = '';
+	for (const ch of text.normalize('NFD')) {
+		if (/\p{M}/u.test(ch)) continue; // combining accent
+		out += TRANSLITERATIONS[ch] ?? ch;
+	}
+	return out.normalize('NFC');
+}
+
 function stripIllegalChars(text) {
 	let out = '';
 	for (const ch of text) {
@@ -17,9 +44,12 @@ function stripIllegalChars(text) {
 	return out;
 }
 
-/** Turn an arbitrary stream title into something every filesystem accepts. */
+/**
+ * Turn an arbitrary stream title into something every filesystem accepts, with
+ * accents folded away so the name stays portable across systems and shells.
+ */
 export function sanitizeFilename(name, maxLength = 120) {
-	let clean = stripIllegalChars(String(name ?? ''))
+	let clean = stripIllegalChars(foldDiacritics(String(name ?? '')))
 		.replace(/\s+/g, ' ')
 		.replace(/^[.\s]+|[.\s]+$/g, '')
 		.trim();

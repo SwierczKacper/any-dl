@@ -35,11 +35,17 @@ function readVersion() {
 	}
 }
 
-function buildFilename(media, variant) {
+/**
+ * "<channel> - <date> - <title>.mp4".
+ *
+ * The quality is deliberately left out: it is readable from the file itself, and
+ * downloading the same VOD twice at different qualities is rare enough that
+ * uniquePath's " (2)" suffix covers it. Exported for testing.
+ */
+export function buildFilename(media) {
 	const date = media.startTime ? formatDate(media.startTime).slice(0, 10) : '';
-	const quality = variant ? ` [${variant.name}]` : '';
 	const fields = [media.channel, date, normalizeTitle(media.title)].filter(Boolean);
-	return `${sanitizeFilename(fields.join(' - '))}${quality}.mp4`;
+	return `${sanitizeFilename(fields.join(' - '))}.mp4`;
 }
 
 function describeMedia(media) {
@@ -218,7 +224,7 @@ export async function run(argv) {
 		? options.output.toLowerCase().endsWith('.mp4')
 			? options.output
 			: `${options.output}.mp4`
-		: buildFilename(media, variant);
+		: buildFilename(media);
 	const outputPath = uniquePath(outputDir, requestedName);
 
 	process.stderr.write('\n');

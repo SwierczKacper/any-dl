@@ -40,7 +40,7 @@ Options
   -q, --quality <q>   best (default), worst, or an exact variant like 1080p60 / 720
       --qualities     list the available qualities for the target and exit
   -o, --output <file> output filename
-                      (default: "<channel> - <date> - <title> [<quality>].mp4")
+                      (default: "<channel> - <date> - <title>.mp4")
   -d, --dir <dir>     output directory (default: $KICK_VOD_DIR, else current dir)
       --channel-dir   save into a per-channel subdirectory of the output directory
       --from <time>   start at this position, e.g. 00:12:30

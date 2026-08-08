@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.2.0
+
+- Drop the quality suffix from generated filenames. `[1080p60]` said nothing the
+  file itself does not, and downloading one VOD at two qualities is rare enough
+  that the existing " (2)" collision suffix covers it.
+  Names are now `<channel> - <date> - <title>.mp4`.
+- Fold accented Latin letters in filenames to plain ASCII (`STREAMERÓW` →
+  `STREAMEROW`, `Łódź` → `Lodz`, `Straße` → `Strasse`), so names survive moving
+  between filesystems and machines. Cyrillic, Greek and CJK are left untouched,
+  having no ASCII equivalent worth substituting.
+
 ## 1.1.0
 
 - Clean up generated filenames. Stream titles often end in a run of chat commands

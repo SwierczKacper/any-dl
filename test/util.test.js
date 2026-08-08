@@ -178,3 +178,21 @@ test('resolveOutputDir keeps a hostile channel name from escaping the directory'
 	const dir = resolveOutputDir({ dir: '/videos', channel: '../../etc', perChannel: true, cwd: '/home/u' });
 	assert.equal(dir, '/videos/etc');
 });
+
+test('sanitizeFilename folds accented Latin letters to plain ASCII', () => {
+	assert.equal(sanitizeFilename('BITWA STREAMERÓW'), 'BITWA STREAMEROW');
+	assert.equal(sanitizeFilename('zażółć gęślą jaźń'), 'zazolc gesla jazn');
+	assert.equal(sanitizeFilename('crème brûlée café'), 'creme brulee cafe');
+});
+
+test('sanitizeFilename transliterates letters NFD cannot decompose', () => {
+	assert.equal(sanitizeFilename('Łódź'), 'Lodz');
+	assert.equal(sanitizeFilename('Straße'), 'Strasse');
+	assert.equal(sanitizeFilename('Ærø'), 'AEro');
+});
+
+test('sanitizeFilename leaves non-Latin scripts alone', () => {
+	// Folding these would destroy the name rather than simplify it.
+	assert.equal(sanitizeFilename('Привет мир'), 'Привет мир');
+	assert.equal(sanitizeFilename('日本語のタイトル'), '日本語のタイトル');
+});
