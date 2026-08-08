@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.7.1
+
+- Drop the realtime multiple from the interactive progress display. It is
+  meaningless without knowing what it measures, and the transfer rate already
+  answers how fast the download is going. It still drives the ETA, and is still
+  reported when output is not a terminal, where the reader is a log.
+
 ## 1.7.0
 
 - Rework the progress display. It now shows position against the requested
