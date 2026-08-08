@@ -1,0 +1,8 @@
+# Keep the blank issue option: some reports do not fit a form, and a form that
+# gets in the way is worse than no form.
+blank_issues_enabled: true
+
+contact_links:
+  - name: Question, or not sure it is a bug
+    url: https://github.com/SwierczKacper/kick-vod/discussions
+    about: Ask anything — how to do something, whether something is possible, or just to say what you use it for.

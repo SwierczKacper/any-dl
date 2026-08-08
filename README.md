@@ -2,7 +2,15 @@
 
 **Download VODs and clips from [kick.com](https://kick.com) in full quality, straight to MP4.**
 
+[![CI](https://github.com/SwierczKacper/kick-vod/actions/workflows/ci.yml/badge.svg)](https://github.com/SwierczKacper/kick-vod/actions/workflows/ci.yml)
+[![Node.js 18+](https://img.shields.io/badge/node-%E2%89%A518-brightgreen)](https://nodejs.org)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 Paste a link, get the file. No re-encoding, no quality cap, **no required dependencies**.
+
+A command-line Kick VOD downloader and clip downloader: it saves past broadcasts
+at up to 1080p60, cuts a slice out of a long stream, and works from a link or
+just a channel name.
 
 ```bash
 kick-vod https://kick.com/somechannel/videos/019fdd44-f600-7184-bf35-ff795a9b372c
@@ -46,6 +54,22 @@ kick-vod xmerghani
 ```
 
 > **Not affiliated with Kick.** Please read [Legal & disclaimer](#️-legal--disclaimer) before use.
+
+---
+
+## Missing something? Just ask
+
+**If this tool does not do something you need, [open an
+issue](https://github.com/SwierczKacper/kick-vod/issues/new/choose) and it will
+probably get added.** No request is too small or too obvious — a flag you
+expected to exist, output you find hard to read, a step that annoys you every
+time. You do not need to know how it should work, or whether it is possible.
+
+Most of what is here came from exactly that: someone said the filenames were
+ugly, or asked what a number on the progress bar meant, and it changed.
+
+If it stops working entirely, that is worth reporting too — Kick has no public
+API, and it has broken once already.
 
 ---
 
@@ -382,6 +406,14 @@ typical; an 8-hour 1080p60 VOD is roughly 25–30 GB.
 ---
 
 ## FAQ
+
+**My other Kick downloader stopped working — why?**
+Kick moved VOD ids to **UUIDv7** (links now look like
+`019fdd44-f600-7184-bf35-ff795a9b372c` rather than
+`d3498feb-7e9a-413e-a5b0-f006f3b2c902`), and the old `api/v1/video/<id>`
+endpoint returns nothing for them. Tools written before that change fail on any
+link copied from the browser today. This one handles both schemes — see
+[How it works](#how-it-works) for the trick that makes it possible.
 
 **Does this work on live streams?**
 No — this is for finished VODs and clips.

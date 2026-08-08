@@ -1,6 +1,6 @@
 {
   "name": "kick-vod",
-  "version": "1.7.1",
+  "version": "1.8.0",
   "description": "Download VODs and clips from kick.com in full quality using ffmpeg. No npm dependencies.",
   "type": "module",
   "license": "MIT",
@@ -19,15 +19,24 @@
   "files": [
     "bin",
     "src",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md",
+    "LICENSE"
   ],
   "keywords": [
     "kick",
     "kick.com",
+    "kick-vod",
     "vod",
+    "vod-downloader",
     "downloader",
-    "ffmpeg",
+    "video-downloader",
+    "clips",
+    "stream",
+    "streaming",
     "hls",
+    "m3u8",
+    "ffmpeg",
     "cli"
   ],
   "engines": {
