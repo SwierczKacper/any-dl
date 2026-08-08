@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.4.0
+
+- Answer the download prompt with a single keypress. `y` or `n` acts
+  immediately; Enter still takes the default. Non-interactive runs are unchanged.
+
 ## 1.3.0
 
 - Add a live smoke test (`npm run smoke`) that exercises the real path: reads

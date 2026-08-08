@@ -28,22 +28,34 @@ function runPrompt(mode, keystrokes) {
 	});
 }
 
-test('confirm resolves true when the user types y', { skip: SKIP, timeout: 30_000 }, async () => {
-	assert.match(await runPrompt('confirm-default-yes', 'y\n'), /RESULT=true/);
+// No trailing newline anywhere below: a single keypress must be enough.
+test('confirm answers on the y key alone', { skip: SKIP, timeout: 30_000 }, async () => {
+	assert.match(await runPrompt('confirm-default-yes', 'y'), /RESULT=true/);
 });
 
-test('confirm resolves false when the user types n', { skip: SKIP, timeout: 30_000 }, async () => {
-	assert.match(await runPrompt('confirm-default-yes', 'n\n'), /RESULT=false/);
+test('confirm answers on the n key alone', { skip: SKIP, timeout: 30_000 }, async () => {
+	assert.match(await runPrompt('confirm-default-yes', 'n'), /RESULT=false/);
+});
+
+test('confirm accepts an uppercase answer', { skip: SKIP, timeout: 30_000 }, async () => {
+	assert.match(await runPrompt('confirm-default-yes', 'Y'), /RESULT=true/);
+	assert.match(await runPrompt('confirm-default-yes', 'N'), /RESULT=false/);
 });
 
 test('confirm falls back to its default on a bare Enter', { skip: SKIP, timeout: 30_000 }, async () => {
-	assert.match(await runPrompt('confirm-default-yes', '\n'), /RESULT=true/);
-	assert.match(await runPrompt('confirm-default-no', '\n'), /RESULT=false/);
+	assert.match(await runPrompt('confirm-default-yes', '\r'), /RESULT=true/);
+	assert.match(await runPrompt('confirm-default-no', '\r'), /RESULT=false/);
 });
 
-test('confirm accepts the spelled-out answer', { skip: SKIP, timeout: 30_000 }, async () => {
-	assert.match(await runPrompt('confirm-default-yes', 'yes\n'), /RESULT=true/);
+test('confirm waits rather than guessing on an unrelated key', { skip: SKIP, timeout: 30_000 }, async () => {
+	// "x" must not be read as either answer — the y that follows decides.
+	assert.match(await runPrompt('confirm-default-yes', 'xq5y'), /RESULT=true/);
 });
+
+// Ctrl+C is not covered here: script(1)'s pty translates it to SIGINT before the
+// process can see it, so the harness kills the child instead of exercising the
+// handler. Escape is not handled at all — readline cannot distinguish a lone ESC
+// from the start of an arrow-key sequence, so it would hang waiting for more input.
 
 test('input returns the typed text', { skip: SKIP, timeout: 30_000 }, async () => {
 	assert.match(await runPrompt('input', 'xmerghani\n'), /RESULT="xmerghani"/);
