@@ -53,3 +53,39 @@ export function progressBar(ratio, width = 24) {
 	const filled = Math.round(clamped * width);
 	return `${'█'.repeat(filled)}${c.gray('░'.repeat(width - filled))}`;
 }
+
+/** Bytes per second as "38.2 MB/s"; empty string when it is not yet known. */
+export function formatRate(bytesPerSecond) {
+	if (!Number.isFinite(bytesPerSecond) || bytesPerSecond <= 0) return '';
+	return `${formatBytes(bytesPerSecond)}/s`;
+}
+
+/**
+ * Lay the progress display out as lines.
+ *
+ * Two lines when there is room — the bar and headline figures on top, the
+ * detail below — because cramming position, size, rate and ETA onto one line
+ * makes none of them readable. Narrow terminals get the compact version rather
+ * than a wrapped mess. Returns plain strings so the layout stays testable.
+ */
+export function formatProgress({ ratio, seconds, totalSeconds, bytes, totalBytes, rate, speed, width = 80 }) {
+	const percent = ratio != null ? `${(ratio * 100).toFixed(1)}%` : '';
+	const remaining = ratio != null && ratio > 0 && speed > 0 ? (seconds / ratio - seconds) / speed : null;
+	const eta = remaining != null ? `ETA ${formatDuration(remaining)}` : '';
+
+	const position = totalSeconds
+		? `${formatDuration(seconds)} / ${formatDuration(totalSeconds)}`
+		: formatDuration(seconds);
+	const size = totalBytes ? `${formatBytes(bytes)} / ~${formatBytes(totalBytes)}` : formatBytes(bytes);
+	const rateText = formatRate(rate);
+	const realtime = speed > 0 ? `${speed.toFixed(1)}x realtime` : '';
+
+	if (width < 72) {
+		return [`  ${[percent, size, rateText, eta].filter(Boolean).join('  ')}`];
+	}
+
+	return [
+		`  ${progressBar(ratio ?? 0)}  ${percent.padStart(6)}   ${eta}`,
+		`  ${[position, size, rateText, realtime].filter(Boolean).join('   ')}`,
+	];
+}
