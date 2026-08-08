@@ -19,7 +19,11 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
 
-      # There are no dependencies to install.
+      # There are no npm dependencies. ffmpeg is not on the runner by default,
+      # and without it the download integration tests would skip themselves.
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
       - name: Syntax check
         run: for file in bin/*.js src/*.js; do node --check "$file"; done
 
