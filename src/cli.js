@@ -119,6 +119,13 @@ async function resolveMedia(target, options) {
 	}
 
 	if (options.list) {
+		if (options.json) {
+			// Same shape as a single --json result, minus the stream URL, which
+			// would mean fetching every playlist just to list them.
+			process.stdout.write(`${JSON.stringify(items, null, 2)}\n`);
+			return null;
+		}
+
 		for (const [index, item] of items.entries()) {
 			process.stdout.write(
 				`${String(index + 1).padStart(2)}. ${item.title}\n    ${describeMedia(item)}\n    https://kick.com/${item.channel}/videos/${item.uuid}\n`
@@ -159,8 +166,38 @@ function parseTimeRange(options) {
  * multi-gigabyte transfer wants to know. It is smoothed, because raw deltas
  * between 200 ms repaints jump around too much to read.
  */
-function makeProgressReporter({ enabled, totalSeconds, estimatedBytes }) {
-	if (!enabled || !process.stderr.isTTY) {
+function makeProgressReporter({ mode, totalSeconds, estimatedBytes }) {
+	if (mode === 'none') {
+		return { onProgress: undefined, done: () => {} };
+	}
+
+	// NDJSON on stdout: one object per line, for a caller that is a program.
+	// stdout is unused during a download, so it stays free of anything else.
+	if (mode === 'json') {
+		let lastEmit = 0;
+		return {
+			onProgress: (stats) => {
+				const now = Date.now();
+				if (now - lastEmit < 500) return;
+				lastEmit = now;
+
+				process.stdout.write(
+					`${JSON.stringify({
+						event: 'progress',
+						seconds: Number(stats.seconds.toFixed(3)),
+						totalSeconds: totalSeconds || null,
+						bytes: stats.bytes,
+						estimatedBytes: estimatedBytes ? Math.round(estimatedBytes) : null,
+						ratio: stats.ratio == null ? null : Number(stats.ratio.toFixed(5)),
+						speed: stats.speed,
+					})}\n`
+				);
+			},
+			done: () => {},
+		};
+	}
+
+	if (!process.stderr.isTTY) {
 		let lastLogged = 0;
 		return {
 			onProgress: (stats) => {
@@ -383,7 +420,7 @@ export async function run(argv) {
 	}
 
 	const reporter = makeProgressReporter({
-		enabled: options.progress,
+		mode: options.progress,
 		totalSeconds: sliceSeconds > 0 ? sliceSeconds : null,
 		estimatedBytes: estimate,
 	});

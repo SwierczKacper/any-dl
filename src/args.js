@@ -13,6 +13,8 @@ const FLAGS = new Set([
 	'--version',
 ]);
 
+const PROGRESS_MODES = new Set(['auto', 'json', 'none']);
+
 const ALIASES = {
 	'-q': '--quality',
 	'-o': '--output',
@@ -52,7 +54,8 @@ Options
       --faststart     move the MP4 index to the front (extra pass, slow on big files)
   -y, --yes           no prompts: best quality, and fail if it will not fit on disk
       --json          print machine-readable metadata to stdout instead of downloading
-      --no-progress   plain log lines instead of a progress bar
+      --progress <m>  auto (default), json for NDJSON on stdout, or none
+      --no-progress   alias for --progress none
   -h, --help          show this help
   -v, --version       show the version
 
@@ -90,7 +93,8 @@ export function parseArgs(argv) {
 		faststart: false,
 		yes: false,
 		json: false,
-		progress: true,
+		// auto | json | none — see PROGRESS_MODES.
+		progress: 'auto',
 		help: false,
 		version: false,
 	};
@@ -138,7 +142,18 @@ export function parseArgs(argv) {
 			case '--faststart': options.faststart = true; break;
 			case '--yes': options.yes = true; break;
 			case '--json': options.json = true; break;
-			case '--no-progress': options.progress = false; break;
+			case '--no-progress': options.progress = 'none'; break;
+			case '--progress': {
+				const mode = takeValue();
+				if (!PROGRESS_MODES.has(mode)) {
+					throw new UserFacingError(
+						`--progress must be one of: ${[...PROGRESS_MODES].join(', ')}`,
+						'auto shows a bar on a terminal and plain lines otherwise; json emits NDJSON on stdout.'
+					);
+				}
+				options.progress = mode;
+				break;
+			}
 			case '--help': options.help = true; break;
 			case '--version': options.version = true; break;
 			default:

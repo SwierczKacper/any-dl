@@ -214,8 +214,9 @@ Run it with no arguments at all and it will ask for a link or channel name.
 | `-n, --limit <n>` | how many entries to list (default: 20) |
 | `--faststart` | move the MP4 index to the front — nicer for streaming, slow on huge files |
 | `-y, --yes` | no prompts: takes the best quality, and fails rather than asking if it will not fit |
-| `--json` | print metadata + the direct stream URL to stdout instead of downloading |
-| `--no-progress` | plain log lines instead of a progress bar (good for cron/CI) |
+| `--json` | print metadata + the direct stream URL to stdout instead of downloading; with `--list`, prints the whole listing as JSON |
+| `--progress <mode>` | `auto` (default), `json` for NDJSON on stdout, or `none` |
+| `--no-progress` | alias for `--progress none` |
 | `-h, --help` / `-v, --version` | help / version |
 
 Timecodes accept `90`, `1:30`, or `01:23:45`.
@@ -321,6 +322,40 @@ simplify it.
 before:  LAST DANCE GTA RP - STREFA.RP [DAY 1]| !sklep !skins !holy !swap !steel
 after:   xmerghani - 2026-08-07 - LAST DANCE GTA RP - STREFA.RP [DAY 1].mp4
 ```
+
+### Driving it from another program
+
+Three things make this usable as a backend rather than only at a prompt.
+
+**A channel listing as JSON**, for polling a channel for new streams:
+
+```bash
+kick-vod somechannel --list --json -n 5
+```
+
+Each entry carries `uuid`, `title`, `channel`, `startTime`, `durationSec`,
+`views`, `category` and `masterUrl`.
+
+**Metadata and the direct stream URL** for one VOD, without downloading:
+
+```bash
+kick-vod <url> --json
+```
+
+**Progress as NDJSON on stdout**, one object per line, roughly twice a second:
+
+```bash
+kick-vod <url> -q 720p60 --yes --progress json
+```
+
+```json
+{"event":"progress","seconds":28.288,"totalSeconds":30,"bytes":524336,"estimatedBytes":862500,"ratio":0.94293,"speed":11.5}
+```
+
+Parse this rather than the human-readable display, which is free to change. In
+`--progress json` mode nothing else is written to stdout, so the stream is safe
+to read line by line. Exit codes are listed [above](#exit-codes), and errors go
+to stderr.
 
 ---
 
