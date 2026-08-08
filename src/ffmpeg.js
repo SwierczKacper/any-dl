@@ -1,15 +1,39 @@
 import { spawn, spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 import { UserFacingError } from './util.js';
 
 let cachedFfmpegPath;
+let usingBundledFfmpeg = false;
 
+/**
+ * ffmpeg-static is an optional dependency, so this resolves to null whenever it
+ * was skipped (`npm install --omit=optional`) or never installed at all.
+ * Required synchronously because the whole detection path is synchronous.
+ */
+function bundledFfmpeg() {
+	try {
+		const path = createRequire(import.meta.url)('ffmpeg-static');
+		return typeof path === 'string' && path ? path : null;
+	} catch {
+		return null;
+	}
+}
+
+/**
+ * Detection order: FFMPEG_PATH, then whatever is on PATH, then the bundled
+ * build. A system ffmpeg is preferred deliberately — the static builds crash on
+ * some systems (WSL2 in particular), so they are the last resort, not the first.
+ */
 export function findFfmpeg() {
 	if (cachedFfmpegPath !== undefined) return cachedFfmpegPath;
 
-	for (const candidate of [process.env.FFMPEG_PATH, 'ffmpeg'].filter(Boolean)) {
+	const candidates = [process.env.FFMPEG_PATH, 'ffmpeg', bundledFfmpeg()].filter(Boolean);
+
+	for (const candidate of candidates) {
 		const probe = spawnSync(candidate, ['-version'], { stdio: 'ignore' });
 		if (probe.status === 0) {
 			cachedFfmpegPath = candidate;
+			usingBundledFfmpeg = candidate !== process.env.FFMPEG_PATH && candidate !== 'ffmpeg';
 			return cachedFfmpegPath;
 		}
 	}
@@ -18,16 +42,23 @@ export function findFfmpeg() {
 	return cachedFfmpegPath;
 }
 
+/** True when the binary in use is the bundled one rather than a system install. */
+export function isUsingBundledFfmpeg() {
+	findFfmpeg();
+	return usingBundledFfmpeg;
+}
+
 export function requireFfmpeg() {
 	const ffmpegPath = findFfmpeg();
 	if (ffmpegPath) return ffmpegPath;
 
 	throw new UserFacingError(
-		'ffmpeg was not found on your PATH.',
+		'No usable ffmpeg was found.',
 		[
 			'Install it, e.g.  sudo apt install ffmpeg   (Debian/Ubuntu)',
 			'                  brew install ffmpeg       (macOS)',
 			'                  winget install ffmpeg     (Windows)',
+			'or let npm supply one:  npm install ffmpeg-static',
 			'or point the tool at a binary:  export FFMPEG_PATH=/path/to/ffmpeg',
 		].join('\n  ')
 	);
@@ -131,7 +162,7 @@ export function download({ url, output, durationSec, from, to, faststart = false
 			reject(new UserFacingError(`Could not run ffmpeg: ${err.message}`));
 		});
 
-		child.on('close', (code) => {
+		child.on('close', (code, signal) => {
 			process.off('SIGINT', onSigint);
 
 			if (interrupted) {
@@ -144,7 +175,25 @@ export function download({ url, output, durationSec, from, to, faststart = false
 			}
 
 			const detail = stderrTail.join('').trim().split('\n').slice(-5).join('\n  ');
-			reject(new UserFacingError(`ffmpeg failed (exit code ${code}).`, detail || undefined));
+
+			// The prebuilt static binaries segfault on some kernels — WSL2 most
+			// notably — where a distribution build runs fine.
+			if (signal === 'SIGSEGV' && isUsingBundledFfmpeg()) {
+				reject(
+					new UserFacingError(
+						'The bundled ffmpeg crashed (segmentation fault).',
+						'This build is known to fail on some systems, WSL2 among them. Install your system ffmpeg — it is preferred automatically:  sudo apt install ffmpeg'
+					)
+				);
+				return;
+			}
+
+			reject(
+				new UserFacingError(
+					signal ? `ffmpeg was killed by ${signal}.` : `ffmpeg failed (exit code ${code}).`,
+					detail || undefined
+				)
+			);
 		});
 	});
 }

@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
-import { buildArgs, download, findFfmpeg } from '../src/ffmpeg.js';
+import { buildArgs, download, findFfmpeg, isUsingBundledFfmpeg } from '../src/ffmpeg.js';
 
 const BASE = { url: 'https://cdn.example.com/playlist.m3u8', output: 'out.mp4' };
 
@@ -110,4 +110,16 @@ test('buildArgs omits reconnect flags for non-HTTP inputs', () => {
 	const args = buildArgs({ url: '/tmp/local.mp4', output: 'out.mp4' });
 	assert.ok(!args.includes('-reconnect'));
 	assert.ok(!args.includes('-reconnect_delay_max'));
+});
+
+test('findFfmpeg prefers a system ffmpeg over the bundled build', { skip: SKIP_INTEGRATION }, () => {
+	// The bundled static builds crash on some systems, so they must never win
+	// when a distribution build is available.
+	assert.equal(findFfmpeg(), 'ffmpeg');
+	assert.equal(isUsingBundledFfmpeg(), false);
+});
+
+test('findFfmpeg returns something runnable', { skip: SKIP_INTEGRATION }, () => {
+	const probe = spawnSync(findFfmpeg(), ['-version'], { stdio: 'ignore' });
+	assert.equal(probe.status, 0);
 });

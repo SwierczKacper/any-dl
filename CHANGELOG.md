@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.3.0
+
+- Ship a working ffmpeg. `ffmpeg-static` is now an optional dependency, so
+  `npm install` produces a tool that runs with nothing else to set up.
+  A system ffmpeg still takes priority — detection order is `FFMPEG_PATH`, then
+  `PATH`, then the bundled build — because the prebuilt static binaries crash on
+  some systems, WSL2 among them. `npm install --omit=optional` skips the
+  download entirely.
+- Report a segfaulting ffmpeg as such instead of "exit code null", and point at
+  installing a system build. Signals are now named in the error message.
+
 ## 1.2.0
 
 - Drop the quality suffix from generated filenames. `[1080p60]` said nothing the
