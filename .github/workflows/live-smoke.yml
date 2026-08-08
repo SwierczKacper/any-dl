@@ -1,0 +1,39 @@
+name: Live smoke test
+
+# Checks the tool against the real Kick API, which the offline test suite cannot
+# cover: an API move, a Cloudflare policy change or a new id scheme would
+# otherwise surface only when a user hit it.
+#
+# Deliberately kept small and infrequent. It takes ~12 seconds of the lowest
+# available quality — a few hundred KB — and deletes it immediately. It is NOT
+# attached to pull requests: Kick is a third party, and its downtime must not
+# block development here.
+on:
+  workflow_dispatch:
+  schedule:
+    # Mondays, 06:00 UTC.
+    - cron: '0 6 * * 1'
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      - name: Install dependencies
+        run: npm ci
+
+      # The runner image ships Chrome, which is what gets us past Cloudflare.
+      - name: Show the browser in use
+        run: google-chrome --version
+
+      - name: Run the live smoke test
+        run: npm run smoke

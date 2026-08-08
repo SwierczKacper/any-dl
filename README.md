@@ -381,7 +381,19 @@ npm test
 They cover link parsing, playlist parsing, quality selection, ffmpeg argument
 construction, filename and timecode handling, and the interactive prompts. The
 prompt tests run under a real pty via `script(1)` and skip themselves on
-platforms without it.
+platforms without it. Everything there is offline — nothing contacts Kick.
+
+Because of that, a separate check exercises the real thing:
+
+```bash
+npm run smoke
+```
+
+It reads the live API, resolves a VOD from whichever of a handful of channels
+answers first, and copies about 12 seconds of the *lowest* quality before
+deleting it. That is what catches an API move or a new id scheme. It runs weekly
+in CI and can be triggered by hand, but is deliberately **not** attached to pull
+requests — Kick is a third party, and its downtime should not block work here.
 
 Work happens on short-lived branches (`fix/…`, `feat/…`, `docs/…`) merged into
 `main` through a pull request once CI is green. `main` stays releasable, and
