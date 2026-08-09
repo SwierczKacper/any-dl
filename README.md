@@ -186,7 +186,7 @@ clone as well.
 ## Usage
 
 ```
-any-dl <url|channel|uuid> [options]
+any-dl <url|channel|id> [options]
 ```
 
 Run it with no arguments at all and it will ask for a link or channel name.
@@ -199,7 +199,7 @@ Run it with no arguments at all and it will ask for a link or channel name.
 | `https://kick.com/<channel>?clip=clip_xxx` | downloads that clip |
 | `https://kick.com/<channel>/clips/<clip_id>` | downloads that clip |
 | `<channel>` | shows an arrow-key picker over that channel's recent VODs |
-| `<uuid>` | a VOD by id (old-style ids only — see [FAQ](#faq)) |
+| `<id>` | a VOD by id (old-style ids only — see [FAQ](#faq)) |
 
 ### Options
 
@@ -330,20 +330,35 @@ after:   xmerghani - 2026-08-07 - LAST DANCE GTA RP - STREFA.RP [DAY 1].mp4
 
 Three things make this usable as a backend rather than only at a prompt.
 
+Every item, wherever it came from, is described by the same fields:
+
+| Field | Meaning |
+| --- | --- |
+| `schemaVersion` | bumped only when a field is removed or changes meaning |
+| `provider` | which site it came from, e.g. `kick` |
+| `kind` | `vod` or `clip` |
+| `id` | the site's own identifier for the item |
+| `channel` | the account it belongs to |
+| `title`, `startTime`, `durationSec`, `views`, `category` | as shown in the listing |
+| `webUrl` | the page a person would open |
+
 **A channel listing as JSON**, for polling a channel for new streams:
 
 ```bash
 any-dl somechannel --list --json -n 5
 ```
 
-Each entry carries `uuid`, `title`, `channel`, `startTime`, `durationSec`,
-`views`, `category` and `masterUrl`.
+Entries carry the fields above and nothing else. The stream URL is deliberately
+absent: producing one means fetching every playlist, and a listing has to stay
+cheap enough to poll.
 
 **Metadata and the direct stream URL** for one VOD, without downloading:
 
 ```bash
 any-dl <url> --json
 ```
+
+That adds `sourceUrl`, `selectedQuality` and `availableQualities`.
 
 **Progress as NDJSON on stdout**, one object per line, roughly twice a second:
 
@@ -411,16 +426,18 @@ terminal, where the reader is a log rather than a person:
 ### Project layout
 
 ```
-bin/any-dl.js      entry point and top-level error handling
-src/browser.js     Chrome detection + reading the Cloudflare-protected API
-src/kick.js        Kick endpoints, link parsing, UUIDv7 fallback
-src/hls.js         master playlist parsing and quality selection
-src/ffmpeg.js      ffmpeg detection, download, progress parsing
-src/prompt.js      arrow-key list picker and prompts (no dependencies)
-src/cli.js         orchestration
-src/args.js        argument parsing
-src/ui.js          colours and formatting
-src/util.js        filenames, timecodes, date handling
+bin/any-dl.js          entry point and top-level error handling
+src/providers/         one module per supported site, plus the registry
+src/providers/kick.js  Kick endpoints, link parsing, UUIDv7 fallback
+src/contract.js        the machine-readable output shapes, built explicitly
+src/browser.js         Chrome detection + reading the Cloudflare-protected API
+src/hls.js             master playlist parsing and quality selection
+src/ffmpeg.js          ffmpeg detection, download, progress parsing
+src/prompt.js          arrow-key list picker and prompts (no dependencies)
+src/cli.js             orchestration
+src/args.js            argument parsing
+src/ui.js              colours and formatting
+src/util.js            filenames, timecodes, date handling
 ```
 
 ---

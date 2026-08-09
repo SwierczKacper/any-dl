@@ -1,7 +1,26 @@
-import { fetchJson } from './browser.js';
-import { isUuid, parseKickDate, UserFacingError, uuidV7Timestamp } from './util.js';
+import { fetchJson } from '../browser.js';
+import { isUuid, parseKickDate, UserFacingError, uuidV7Timestamp } from '../util.js';
 
 const API_BASE = 'https://kick.com/api';
+
+/** Identifies this provider in `--json` output and in error messages. */
+export const key = 'kick';
+export const label = 'Kick';
+
+/**
+ * Whether a link belongs to this provider. Only URLs are decided here: a bare
+ * channel name looks the same on every site, so the registry routes those to
+ * the default provider instead of asking each one.
+ */
+export function matchUrl(url) {
+	return /(^|\.)kick\.com$/i.test(url.hostname);
+}
+
+/** The page a human would open for this item — the listing prints it. */
+export function webUrl(media) {
+	if (media.kind === 'clip') return `https://kick.com/${media.channel}?clip=${media.id}`;
+	return `https://kick.com/${media.channel}/videos/${media.id}`;
+}
 
 /**
  * Work out what the user gave us: a VOD link, a clip link, a bare UUID,
@@ -12,7 +31,7 @@ export function parseTarget(input) {
 	if (!raw) throw new UserFacingError('No channel or link given.');
 
 	if (/^https?:\/\//i.test(raw)) return parseUrl(raw);
-	if (isUuid(raw)) return { type: 'video', uuid: raw };
+	if (isUuid(raw)) return { type: 'video', id: raw };
 	if (/^clip_/i.test(raw)) return { type: 'clip', id: raw };
 
 	const channel = raw.replace(/^@/, '');
@@ -45,7 +64,7 @@ function parseUrl(rawUrl) {
 	if (videoIndex !== -1 && segments[videoIndex + 1]) {
 		return {
 			type: 'video',
-			uuid: segments[videoIndex + 1],
+			id: segments[videoIndex + 1],
 			channel: videoIndex > 0 ? segments[0] : undefined,
 		};
 	}
@@ -62,12 +81,12 @@ function parseUrl(rawUrl) {
 }
 
 /** Shape the different Kick payloads into one consistent object. */
-function normalizeVod({ uuid, source, livestream, channelName }) {
+function normalizeVod({ id, source, livestream, channelName }) {
 	const durationMs = Number(livestream?.duration) || 0;
 
 	return {
 		kind: 'vod',
-		uuid,
+		id,
 		title: livestream?.session_title?.trim() || 'Untitled stream',
 		channel: channelName || livestream?.channel?.slug || livestream?.channel?.user?.username || 'kick',
 		startTime: livestream?.start_time || livestream?.created_at || null,
@@ -81,24 +100,24 @@ function normalizeVod({ uuid, source, livestream, channelName }) {
 /** How far apart a UUIDv7 timestamp and a listed start_time may be and still count as the same stream. */
 const START_TIME_TOLERANCE_MS = 10_000;
 
-export async function getVideo(uuid, { channel } = {}) {
-	const data = await fetchJson(`${API_BASE}/v1/video/${encodeURIComponent(uuid)}`);
+export async function getVideo(id, { channel } = {}) {
+	const data = await fetchJson(`${API_BASE}/v1/video/${encodeURIComponent(id)}`);
 
 	if (data?.source) {
-		return normalizeVod({ uuid: data.uuid ?? uuid, source: data.source, livestream: data.livestream });
+		return normalizeVod({ id: data.uuid ?? id, source: data.source, livestream: data.livestream });
 	}
 
 	// Newer links carry a UUIDv7 that the v1 endpoint does not know. Its embedded
 	// timestamp is the stream's start time, so we can find the same VOD in the
 	// channel listing instead.
-	const startedAt = uuidV7Timestamp(uuid);
+	const startedAt = uuidV7Timestamp(id);
 	if (startedAt && channel) {
 		const match = await findVodByStartTime(channel, startedAt);
 		if (match) return match;
 	}
 
 	throw new UserFacingError(
-		`VOD ${uuid} has no playable source.`,
+		`VOD ${id} has no playable source.`,
 		startedAt && !channel
 			? 'Use the full link that includes the channel name, e.g. https://kick.com/<channel>/videos/<id>.'
 			: 'It may be private, deleted, or already pruned by Kick.'
@@ -127,7 +146,7 @@ export async function getChannelVods(channel, { limit = 20 } = {}) {
 		.slice(0, limit)
 		.map((entry) =>
 			normalizeVod({
-				uuid: entry.video?.uuid,
+				id: entry.video?.uuid,
 				source: entry.source,
 				livestream: entry,
 				channelName: channel,
@@ -152,7 +171,7 @@ export async function getChannelClips(channel, { limit = 20 } = {}) {
 function normalizeClip(clip, channelName) {
 	return {
 		kind: 'clip',
-		uuid: clip.id,
+		id: clip.id,
 		title: clip.title?.trim() || 'Untitled clip',
 		channel: channelName || clip.channel?.slug || 'kick',
 		startTime: clip.created_at || null,

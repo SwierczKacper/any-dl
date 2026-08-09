@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { parseTarget } from '../src/kick.js';
+import { parseTarget } from '../src/providers/kick.js';
 
 test('parseTarget reads a channel VOD link', () => {
 	assert.deepEqual(parseTarget('https://kick.com/xmerghani/videos/019fdd44-f600-7184-bf35-ff795a9b372c'), {
 		type: 'video',
-		uuid: '019fdd44-f600-7184-bf35-ff795a9b372c',
+		id: '019fdd44-f600-7184-bf35-ff795a9b372c',
 		channel: 'xmerghani',
 	});
 });
@@ -14,7 +14,7 @@ test('parseTarget reads a channel VOD link', () => {
 test('parseTarget reads a channel-less VOD link', () => {
 	assert.deepEqual(parseTarget('https://kick.com/video/d3498feb-7e9a-413e-a5b0-f006f3b2c902'), {
 		type: 'video',
-		uuid: 'd3498feb-7e9a-413e-a5b0-f006f3b2c902',
+		id: 'd3498feb-7e9a-413e-a5b0-f006f3b2c902',
 		channel: undefined,
 	});
 });
@@ -50,7 +50,7 @@ test('parseTarget accepts a bare channel name', () => {
 test('parseTarget accepts a bare uuid', () => {
 	assert.deepEqual(parseTarget('d3498feb-7e9a-413e-a5b0-f006f3b2c902'), {
 		type: 'video',
-		uuid: 'd3498feb-7e9a-413e-a5b0-f006f3b2c902',
+		id: 'd3498feb-7e9a-413e-a5b0-f006f3b2c902',
 	});
 });
 
