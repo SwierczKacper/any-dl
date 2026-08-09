@@ -30,7 +30,11 @@ export function parseMasterPlaylist(text, masterUrl) {
 		const frameRate = Math.round(Number(attributes['FRAME-RATE'])) || null;
 
 		variants.push({
-			name: attributes.VIDEO || (height ? `${height}p${frameRate ?? ''}` : `variant-${variants.length + 1}`),
+			// Named from the resolution rather than from VIDEO, which is a group id
+			// and only looks like a quality on some sites. Twitch calls its source
+			// rendition "chunked", so trusting that id would put "chunked" in the
+			// picker and make --quality 1080p60 miss the very variant it names.
+			name: height ? `${height}p${frameRate ?? ''}` : attributes.VIDEO || `variant-${variants.length + 1}`,
 			width: width || null,
 			height: height || null,
 			frameRate,
