@@ -13,15 +13,17 @@ npm install -g any-dl
 
 Paste a link, get the file. No re-encoding, no quality cap, **no required dependencies**.
 
-**Supported sites:** [kick.com](https://kick.com) — VODs and clips. More sites are
-planned; [ask for one](https://github.com/SwierczKacper/any-dl/issues/new/choose).
+**Supported sites:** [kick.com](https://kick.com) and [twitch.tv](https://twitch.tv)
+— VODs and clips on both. More are planned;
+[ask for one](https://github.com/SwierczKacper/any-dl/issues/new/choose).
 
-A command-line Kick VOD downloader and clip downloader: it saves past broadcasts
-at up to 1080p60, cuts a slice out of a long stream, and works from a link or
-just a channel name.
+A command-line VOD and clip downloader for Kick and Twitch: it saves past
+broadcasts at up to 1080p60, cuts a slice out of a long stream, and works from a
+link or just a channel name.
 
 ```bash
 any-dl https://kick.com/somechannel/videos/019fdd44-f600-7184-bf35-ff795a9b372c
+any-dl https://www.twitch.tv/videos/2832871456
 ```
 
 ```
@@ -44,10 +46,11 @@ Pick one with a single keypress and it starts, showing what it is actually doing
   00:21:22 / 01:00:00   1.2 GB / ~3.4 GB   89.0 MB/s
 ```
 
-Or give it a channel name and choose from its recent streams:
+Or give it a site and a channel name, and choose from that channel's recent
+streams:
 
 ```bash
-any-dl xmerghani
+any-dl kick xmerghani
 ```
 
 ```
@@ -62,7 +65,28 @@ any-dl xmerghani
 
 Press `c` in that list to swap between the channel's VODs and its clips.
 
-> **Not affiliated with Kick.** Please read [Legal & disclaimer](#️-legal--disclaimer) before use.
+Name the site first when you are giving a channel rather than a link, since a
+name on its own does not say where it lives:
+
+```bash
+any-dl twitch ewroon --list -n 3
+```
+
+```
+› Fetching VODs for ewroon…
+ 1. [EN/ES CC]🔥MECCHA CHAMELEON MEGA LOBBY🔥!G4 !holy !flashskins VODY na !yt
+    2026-07-31 19:21 · 04:12:43 · Just Chatting · 246,011 views
+    https://www.twitch.tv/videos/2833699373
+ 2. [EN/ES CC]🔥EKIPOWY DZIEN GOLFOWY🔥!G4 !holy !flashskins VODY na !yt
+    2026-07-30 19:21 · 06:05:40 · Just Chatting · 294,026 views
+    https://www.twitch.tv/videos/2832871456
+ 3. [EN/ES CC]🔥EKIPOWY DZIEN Z QSMP🔥!G4 !holy !flashskins VODY na !yt
+    2026-07-29 19:22 · 06:10:27 · Just Chatting · 327,085 views
+    https://www.twitch.tv/videos/2832056864
+```
+
+> **Not affiliated with Kick or Twitch.** Please read
+> [Legal & disclaimer](#️-legal--disclaimer) before use.
 
 ---
 
@@ -80,8 +104,8 @@ ugly, or asked what a number on the progress bar meant, and it changed.
 What is already planned — more sites among other things — is listed in the
 [roadmap](ROADMAP.md). Asking for something is the quickest way to move it up.
 
-If it stops working entirely, that is worth reporting too — Kick has no public
-API, and it has broken once already.
+If it stops working entirely, that is worth reporting too — neither site offers
+a public API for this, and Kick has broken once already.
 
 ---
 
@@ -101,7 +125,7 @@ API, and it has broken once already.
 
 ## Why another one
 
-Most existing Kick downloaders hardcode a low quality, ship a bundled ffmpeg binary
+Most existing downloaders hardcode a low quality, ship a bundled ffmpeg binary
 that crashes on some systems, or install a full headless-browser framework
 (150+ packages) just to read a single JSON endpoint.
 
@@ -110,10 +134,13 @@ This one:
 - **Offers every quality up to 1080p60**, with the best one preselected
 - **Tells you the size before you commit**, and warns when it will not fit on disk
 - **Prefers your ffmpeg**, falling back to a bundled one, so it works either way
-- **No required npm dependencies** — it drives a Chrome you already have on disk
+- **No required npm dependencies** — where a browser is needed at all, it drives
+  a Chrome you already have on disk
 - **Real progress reporting**, because it knows the VOD duration up front
 - **Grabs just a slice** of an 8-hour stream with `--from` / `--to`
 - **Understands both old and new Kick links**, including the new UUIDv7 ids
+- **Reads Twitch without a browser at all**, and without the persisted-query
+  hashes that break other tools whenever Twitch changes its schema
 - **Never overwrites** an existing file, and leaves a playable MP4 on Ctrl+C
 
 ---
@@ -124,7 +151,10 @@ This one:
 | --- | --- | --- |
 | **Node.js ≥ 18** | runtime | [nodejs.org](https://nodejs.org) |
 | **ffmpeg** | downloads the HLS stream and writes the MP4 | comes with `npm install` — see below |
-| **Chrome / Chromium** | Kick's API sits behind Cloudflare, which rejects non-browser clients | `apt install chromium-browser`, or any Chrome / Brave / Edge you already have |
+| **Chrome / Chromium** | **Kick only.** Its API sits behind Cloudflare, which rejects non-browser clients | `apt install chromium-browser`, or any Chrome / Brave / Edge you already have |
+
+Twitch needs no browser — its API answers an ordinary request — so if Twitch is
+all you use, ffmpeg is the only thing required.
 
 **ffmpeg is included.** `ffmpeg-static` is an optional dependency, so a normal
 install brings a working binary with it and there is nothing else to set up. A
@@ -203,8 +233,14 @@ Run it with no arguments at all and it will ask for a link or channel name.
 | `https://kick.com/<channel>/videos/<id>` | downloads that VOD |
 | `https://kick.com/<channel>?clip=clip_xxx` | downloads that clip |
 | `https://kick.com/<channel>/clips/<clip_id>` | downloads that clip |
+| `https://www.twitch.tv/videos/<id>` | downloads that VOD |
+| `https://www.twitch.tv/<channel>/clip/<slug>` | downloads that clip |
+| `https://clips.twitch.tv/<slug>` | downloads that clip |
 | `<channel>` | shows an arrow-key picker over that channel's recent VODs |
-| `<id>` | a VOD by id (old-style ids only — see [FAQ](#faq)) |
+| `<id>` | a VOD by id (on Kick, old-style ids only — see [FAQ](#faq)) |
+
+A channel page and its tabs work as targets too, so
+`https://www.twitch.tv/<channel>/clips` is the same as naming the channel.
 
 ### Which site it uses
 
@@ -212,14 +248,20 @@ A link says which site it belongs to, so nothing needs deciding. A bare channel
 name does not — `somechannel` looks the same everywhere — so it is resolved in
 this order:
 
-1. a site named before the target: `any-dl kick somechannel`
-2. `--provider kick`
+1. a site named before the target: `any-dl twitch somechannel`
+2. `--provider twitch`
 3. the `ANY_DL_PROVIDER` environment variable
-4. the only supported site, while there is only one
+4. a picker, asking which site you meant
 
-Once a second site exists, a name that could belong to either will bring up a
-picker. Without a terminal — in a script, or under `--yes` — it fails and asks
-you to be explicit instead of guessing.
+Naming the site first is also how you reach a channel whose name happens to
+match a site. Without a terminal — in a script, or under `--yes` — there is
+nobody to ask, so a bare name fails telling you to be explicit rather than
+guessing at one site and silently downloading from the wrong place. Set
+`ANY_DL_PROVIDER` once if your scripts always mean the same site:
+
+```bash
+export ANY_DL_PROVIDER=twitch
+```
 
 ### Options
 
@@ -252,7 +294,8 @@ Timecodes accept `90`, `1:30`, or `01:23:45`.
 any-dl https://kick.com/xqc/videos/<id> -d ~/Videos
 
 # Browse a channel's recent streams and pick one
-any-dl xqc
+any-dl kick xqc
+any-dl twitch somechannel
 
 # What qualities does this VOD have?
 any-dl <url> --qualities
@@ -264,7 +307,7 @@ any-dl <url> --from 01:00:00 --to 01:15:00 -o highlight.mp4
 any-dl <url> -q 720p60 --yes
 
 # List recent VODs with their links
-any-dl xqc --list -n 10
+any-dl kick xqc --list -n 10
 
 # Grab the direct stream URL for your own tooling
 any-dl <url> --json | jq -r .sourceUrl
@@ -356,7 +399,7 @@ Every item, wherever it came from, is described by the same fields:
 | Field | Meaning |
 | --- | --- |
 | `schemaVersion` | bumped only when a field is removed or changes meaning |
-| `provider` | which site it came from, e.g. `kick` |
+| `provider` | which site it came from: `kick` or `twitch` |
 | `kind` | `vod` or `clip` |
 | `id` | the site's own identifier for the item |
 | `channel` | the account it belongs to |
@@ -366,7 +409,7 @@ Every item, wherever it came from, is described by the same fields:
 **A channel listing as JSON**, for polling a channel for new streams:
 
 ```bash
-any-dl somechannel --list --json -n 5
+any-dl twitch somechannel --list --json -n 5
 ```
 
 Entries carry the fields above and nothing else. The stream URL is deliberately
@@ -400,27 +443,38 @@ to stderr.
 
 ## How it works
 
-Four steps, no magic:
+Four steps, no magic. The first differs per site; the rest are shared.
 
-**1. Read the VOD metadata.** Kick's API is behind Cloudflare, which blocks `curl`,
-Node's `fetch`, and anything whose user-agent says `HeadlessChrome`. Instead of
-installing a browser-automation framework, this tool launches a Chrome you already
-have with `--dump-dom` and reads the JSON straight out of the rendered page.
+**1. Read the VOD metadata.**
 
-**2. Handle both id schemes.** Kick recently migrated VOD ids to **UUIDv7**, and the
-old `api/v1/video/<id>` endpoint returns nothing for the new ones. Conveniently, the
-first 48 bits of a UUIDv7 are a millisecond timestamp — and for a VOD that timestamp
-is exactly the stream's start time. So when a new-style id isn't recognised, the tool
-decodes that timestamp and matches it against the channel's VOD listing to find the
-same stream. This is why a new-style link needs the channel in the URL.
+*Kick* is behind Cloudflare, which blocks `curl`, Node's `fetch`, and anything
+whose user-agent says `HeadlessChrome`. Instead of installing a
+browser-automation framework, this tool launches a Chrome you already have with
+`--dump-dom` and reads the JSON straight out of the rendered page.
 
-**3. Pick a quality.** The metadata points at an HLS master playlist on Kick's CDN
-(not Cloudflare-protected, so a plain `fetch` is enough). That playlist is parsed
-into variants — typically 1080p60 / 720p60 / 480p30 / 360p30 / 160p30 — sorted by
-bitrate, and `--quality` selects one.
+*Twitch* needs none of that: its GraphQL API answers an ordinary request. The
+queries are written out in full rather than sent as *persisted queries* — an
+operation name plus a hash of a query Twitch already knows. Hashes are what most
+tools use and they are the usual reason those tools break, because Twitch
+rotates them whenever the schema moves and every client pinned to an old hash
+fails on the same afternoon. Sending the query itself costs one larger request
+and survives those changes.
+
+**2. Handle each site's id scheme.** Kick migrated VOD ids to **UUIDv7**, and its
+old `api/v1/video/<id>` endpoint returns nothing for the new ones. Conveniently,
+the first 48 bits of a UUIDv7 are a millisecond timestamp — and for a VOD that
+timestamp is exactly the stream's start time. So when a new-style id isn't
+recognised, the tool decodes that timestamp and matches it against the channel's
+VOD listing to find the same stream. This is why a new-style Kick link needs the
+channel in the URL. Twitch has no such history: its ids are plain numbers.
+
+**3. Pick a quality.** The metadata leads to an HLS master playlist — on Kick's
+CDN directly, on Twitch via a signed playback token. Either way it is parsed
+into variants (typically 1080p60 / 720p60 / 480p30 / 360p30 / 160p30), sorted by
+bitrate, and `--quality` selects one. Clips are plain MP4s and skip this step.
 
 **4. Download.** ffmpeg copies the chosen variant into an MP4 with `-c copy`, so
-there is **no re-encoding**: bit-for-bit the same video and audio Kick served.
+there is **no re-encoding**: bit-for-bit the same video and audio the site served.
 Progress comes from ffmpeg's `-progress pipe:1` output, and since the VOD duration
 is known in advance, the percentage and ETA are real rather than guessed.
 
@@ -447,12 +501,14 @@ terminal, where the reader is a log rather than a person:
 ### Project layout
 
 ```
-bin/any-dl.js          entry point and top-level error handling
-src/providers/         one module per supported site, plus the registry
-src/providers/kick.js  Kick endpoints, link parsing, UUIDv7 fallback
-src/contract.js        the machine-readable output shapes, built explicitly
-src/browser.js         Chrome detection + reading the Cloudflare-protected API
-src/hls.js             master playlist parsing and quality selection
+bin/any-dl.js           entry point and top-level error handling
+src/providers/          one module per supported site, plus the registry
+src/providers/kick.js   Kick endpoints, link parsing, UUIDv7 fallback
+src/providers/twitch.js Twitch GraphQL, link parsing, playback tokens
+src/contract.js         the machine-readable output shapes, built explicitly
+src/http.js             plain HTTP, for everything that needs no browser
+src/browser.js          Chrome detection + reading the Cloudflare-protected API
+src/hls.js              master playlist parsing and quality selection
 src/ffmpeg.js          ffmpeg detection, download, progress parsing
 src/prompt.js          arrow-key list picker and prompts (no dependencies)
 src/cli.js             orchestration
@@ -475,19 +531,27 @@ crash under WSL2 — if you hit a segfault, use your distribution's package inst
 **`The Kick API did not return JSON.` / Cloudflare challenge**
 Cloudflare occasionally serves an interstitial. Wait a few seconds and retry — the
 clearance cookie is cached in a temporary Chrome profile, so it usually only happens
-on the first run.
+on the first run. Twitch is unaffected: it needs no browser at all.
 
 **`VOD … has no playable source.`**
 The stream is private, was deleted, or Kick has pruned it. If you passed a bare
 new-style id, use the full link that includes the channel name instead.
+
+**`Twitch has no video …`**
+It was deleted, or it expired — Twitch keeps VODs for a limited time, and for
+non-partnered channels that is a fortnight.
+
+**`Twitch will not play video …`**
+The VOD is subscriber-only. This tool uses no account and bypasses no access
+control, so there is nothing to be done about it here.
 
 **`ffmpeg produced an empty file — nothing was downloaded.`**
 The `--from`/`--to` range was shorter than the distance to the next keyframe.
 Nothing is re-encoded, so copying can only start at a keyframe, and a range of a
 few seconds can fall entirely between two of them. Ask for 10 seconds or more.
 
-**Kick CDN returns HTTP 404**
-Old VODs get pruned by Kick. Nothing can be done about that.
+**The CDN returns HTTP 404**
+Old VODs get pruned. Nothing can be done about that.
 
 **The download is slow**
 `-c copy` means the bottleneck is your connection, not your CPU. 30–60× realtime is
@@ -509,10 +573,28 @@ link copied from the browser today. This one handles both schemes — see
 No — this is for finished VODs and clips.
 
 **Does it download chat?**
-No.
+No. It is on the [roadmap](ROADMAP.md) as an idea worth investigating, not as
+something promised.
+
+**Why is 1080p the highest Twitch quality I see?**
+Because that is what Twitch offers to a viewer who is not signed in. Anything
+above it is gated behind an account, and this tool deliberately uses none.
+
+**Why does a Twitch download have silent stretches?**
+Twitch mutes sections of a VOD when it detects copyrighted music. The audio is
+already gone from what it serves, so nothing downstream can recover it.
+
+**Why are Twitch clips listed by views rather than by date?**
+It is the only ordering Twitch's clips endpoint reliably accepts — it is also
+what its own clips tab shows. Each entry still displays its date.
 
 **Why does a bare new-style id fail?**
 The UUIDv7 fallback needs to know which channel to search. Pass the full link.
+This is a Kick quirk; Twitch ids are plain numbers and work bare.
+
+**A bare channel name now asks which site — can I stop that?**
+Yes: name the site (`any-dl twitch somechannel`), or set `ANY_DL_PROVIDER` once.
+The question only exists because a name genuinely does not say where it lives.
 
 **Is `--from` frame-accurate?**
 No. Seeking happens at keyframe boundaries, so a cut can land a couple of seconds
@@ -525,17 +607,19 @@ but restarting begins from the beginning (or use `--from` to skip ahead).
 
 **Why Chrome instead of a scraping library?**
 Because a library that gets through Cloudflare needs a real browser engine anyway.
-Using the browser directly keeps the dependency count at zero.
+Using the browser directly keeps the dependency count at zero. It is only used
+for the sites that require it — Kick today — and never for Twitch.
 
 ---
 
 ## ⚖️ Legal & disclaimer
 
 **This project is not affiliated with, associated with, authorised by, endorsed by,
-or in any way officially connected to Kick, Kick Streaming Pty Ltd, or any of their
-subsidiaries or affiliates.** The name "Kick", the Kick logo, and all related marks
-are the property of their respective owners and are used here only to describe what
-this software interoperates with.
+or in any way officially connected to Kick, Kick Streaming Pty Ltd, Twitch, Twitch
+Interactive, Inc., Amazon, or any of their subsidiaries or affiliates.** The names
+"Kick" and "Twitch", their logos, and all related marks are the property of their
+respective owners and are used here only to describe what this software
+interoperates with.
 
 **This software is provided for personal, lawful use only.** It is a convenience
 wrapper around ffmpeg: it reads publicly accessible metadata and passes a publicly
@@ -546,15 +630,16 @@ access private, unlisted, or subscriber-only content.
 **You are responsible for how you use it.** Before downloading anything, make sure
 you have the right to do so. In particular:
 
-- Downloading may be restricted by **Kick's Terms of Service**. Review them and
-  comply with them — using this tool does not exempt you from that agreement.
+- Downloading may be restricted by **the Terms of Service of the site you are
+  downloading from**. Review them and comply with them — using this tool does
+  not exempt you from that agreement.
 - Streams are the **copyrighted work of the creators** who made them, and often
   contain third-party copyrighted material (music, games, video) as well.
 - **Do not redistribute, re-upload, or monetise** downloaded content without
   permission from the rights holders.
 - Personal exceptions such as private copying or fair use/fair dealing **vary by
   country** and may not cover your situation.
-- Be considerate of Kick's infrastructure: don't run this in bulk or hammer it.
+- Be considerate of the site's infrastructure: don't run this in bulk or hammer it.
 
 **No warranty.** This software is provided "as is", without warranty of any kind,
 express or implied, as set out in the [LICENSE](LICENSE). The authors and
@@ -564,18 +649,20 @@ suspension, or other consequence arising from its use or misuse.
 **This is not legal advice.** If you are unsure whether a particular use is lawful
 where you live, consult a qualified lawyer.
 
-**Unofficial and unstable.** Kick provides no public API for this, so the tool relies
-on endpoints that can change or disappear without notice — as already happened once
-with the move to UUIDv7 ids. Expect occasional breakage.
+**Unofficial and unstable.** Neither site provides a public API for this, so the tool
+relies on endpoints that can change or disappear without notice — as already happened
+once with Kick's move to UUIDv7 ids. Expect occasional breakage.
 
-If you represent Kick and would like this project changed or taken down, please open
-an issue.
+If you represent either site and would like this project changed or taken down,
+please open an issue.
 
 ---
 
 ## Contributing
 
-Issues and pull requests are welcome — especially fixes for Kick API changes.
+Issues and pull requests are welcome — especially fixes for API changes at either
+site, and new sites: adding one means writing a single module, and
+[CONTRIBUTING.md](CONTRIBUTING.md) walks through it.
 There is no build step: clone it, edit it, run `node bin/any-dl.js` to try it.
 Please add no required dependencies — the only one is `ffmpeg-static`, and it is
 optional precisely so the tool still works when it is absent.
@@ -589,7 +676,7 @@ npm test
 They cover link parsing, playlist parsing, quality selection, ffmpeg argument
 construction, filename and timecode handling, and the interactive prompts. The
 prompt tests run under a real pty via `script(1)` and skip themselves on
-platforms without it. Everything there is offline — nothing contacts Kick.
+platforms without it. Everything there is offline — nothing contacts either site.
 
 Because of that, a separate check exercises the real thing:
 
@@ -601,7 +688,8 @@ It reads the live API, resolves a VOD from whichever of a handful of channels
 answers first, and copies about 12 seconds of the *lowest* quality before
 deleting it. That is what catches an API move or a new id scheme. It runs weekly
 in CI and can be triggered by hand, but is deliberately **not** attached to pull
-requests — Kick is a third party, and its downtime should not block work here.
+requests — both sites are third parties, and their downtime should not block work
+here.
 
 Work happens on short-lived branches (`fix/…`, `feat/…`, `docs/…`) merged into
 `main` through a pull request once CI is green. `main` stays releasable, and

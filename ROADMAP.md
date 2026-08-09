@@ -12,12 +12,11 @@ Nothing here is claimed to work yet. For what does work today, see the
 ## More sites
 
 The provider layer landed in 3.0.0, so each of these is a self-contained module
-rather than surgery on the core.
+rather than surgery on the core. Twitch arrived in 4.0.0 and was the proof that
+the interface holds: it needed no change to anything outside its own module.
 
-- **Twitch** — next in line. VODs and clips, served over HLS much like Kick, so
-  it doubles as the proof that the provider interface actually holds.
-- **YouTube** — regular videos first, live replays if they turn out not to be a
-  separate problem.
+- **YouTube** — next in line. Regular videos first, live replays if they turn
+  out not to be a separate problem.
 - **Facebook** — video and reels.
 - **TikTok** and **Instagram** — deliberately last. Signed requests and forced
   logins make them a different class of problem from the HLS sites, and they
@@ -31,6 +30,13 @@ Want one that is not listed? Ask — the order is not fixed.
   example giving a length instead of an end timestamp.
 - **Resuming an interrupted download** instead of starting the file again.
 - **Batch input** — a file of links, or every VOD on a channel.
+- **Choosing a clip's quality.** Clips are treated as having exactly one, which
+  was true of the first site supported and is not true of Twitch — its clips
+  come in several and the best is taken without asking.
+- **Reaching content that needs an account**, such as a subscriber-only VOD.
+  Currently no site is given credentials at all, which is the reason nothing
+  gated is downloadable; whether that should change is a decision, not an
+  oversight.
 
 ## Ideas
 
@@ -39,10 +45,11 @@ needs someone to work out whether it is possible and whether it is worth doing
 before it becomes anything more than a line in this section.
 
 - **Saving a stream's chat alongside the video.** A VOD replays its chat in the
-  browser, so the messages exist somewhere and can presumably be fetched — as a
-  file next to the MP4 at first, and perhaps burned into the picture later. How
-  far this goes depends entirely on the site: what a replay exposes differs
-  between them, and some may expose nothing at all.
+  browser, so the messages exist somewhere and can be fetched — as a file next
+  to the MP4 at first, and perhaps burned into the picture later. Twitch does
+  expose a replay that can be paged through; whether the other sites do, what
+  format the file should take, and whether rendering chat into video belongs in
+  a tool this small are all still open.
 
 ## Maintenance
 

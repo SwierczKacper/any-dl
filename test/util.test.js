@@ -8,7 +8,7 @@ import {
 	freeSpaceBytes,
 	isUuid,
 	normalizeTitle,
-	parseKickDate,
+	parseTimestamp,
 	parseTimecode,
 	resolveOutputDir,
 	sanitizeFilename,
@@ -33,14 +33,14 @@ test('sanitizeFilename truncates to the requested length', () => {
 });
 
 test('sanitizeFilename falls back when nothing usable remains', () => {
-	assert.equal(sanitizeFilename('///'), 'kick-video');
-	assert.equal(sanitizeFilename(''), 'kick-video');
-	assert.equal(sanitizeFilename(null), 'kick-video');
+	assert.equal(sanitizeFilename('///'), 'video');
+	assert.equal(sanitizeFilename(''), 'video');
+	assert.equal(sanitizeFilename(null), 'video');
 });
 
 test('sanitizeFilename avoids names reserved on Windows', () => {
-	assert.equal(sanitizeFilename('CON'), 'kick-video');
-	assert.equal(sanitizeFilename('lpt1'), 'kick-video');
+	assert.equal(sanitizeFilename('CON'), 'video');
+	assert.equal(sanitizeFilename('lpt1'), 'video');
 });
 
 test('uniquePath returns the plain path when nothing is in the way', () => {
@@ -88,27 +88,27 @@ test('uuidV7Timestamp ignores other uuid versions', () => {
 	assert.equal(uuidV7Timestamp('nonsense'), null);
 });
 
-test('parseKickDate treats a missing timezone as UTC', () => {
+test('parseTimestamp treats a missing timezone as UTC', () => {
 	// Kick returns this form in channel listings; Date() alone would read it as local time.
-	assert.equal(parseKickDate('2026-08-07 17:28:32').toISOString(), '2026-08-07T17:28:32.000Z');
+	assert.equal(parseTimestamp('2026-08-07 17:28:32').toISOString(), '2026-08-07T17:28:32.000Z');
 });
 
-test('parseKickDate honours an explicit offset', () => {
-	assert.equal(parseKickDate('2026-08-07T17:28:32+00:00').toISOString(), '2026-08-07T17:28:32.000Z');
-	assert.equal(parseKickDate('2026-08-07T19:28:32+02:00').toISOString(), '2026-08-07T17:28:32.000Z');
+test('parseTimestamp honours an explicit offset', () => {
+	assert.equal(parseTimestamp('2026-08-07T17:28:32+00:00').toISOString(), '2026-08-07T17:28:32.000Z');
+	assert.equal(parseTimestamp('2026-08-07T19:28:32+02:00').toISOString(), '2026-08-07T17:28:32.000Z');
 });
 
-test('parseKickDate agrees across both Kick formats for the same instant', () => {
+test('parseTimestamp agrees across both Kick formats for the same instant', () => {
 	assert.equal(
-		parseKickDate('2026-08-07 17:28:32').getTime(),
-		parseKickDate('2026-08-07T17:28:32+00:00').getTime()
+		parseTimestamp('2026-08-07 17:28:32').getTime(),
+		parseTimestamp('2026-08-07T17:28:32+00:00').getTime()
 	);
 });
 
-test('parseKickDate returns null for junk', () => {
-	assert.equal(parseKickDate('not a date'), null);
-	assert.equal(parseKickDate(null), null);
-	assert.equal(parseKickDate(''), null);
+test('parseTimestamp returns null for junk', () => {
+	assert.equal(parseTimestamp('not a date'), null);
+	assert.equal(parseTimestamp(null), null);
+	assert.equal(parseTimestamp(''), null);
 });
 
 test('normalizeTitle strips trailing chat commands', () => {
