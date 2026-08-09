@@ -1,23 +1,5 @@
+import { getText } from './http.js';
 import { UserFacingError } from './util.js';
-
-/** Kick's CDN is not behind Cloudflare, so a plain fetch is enough here. */
-async function fetchText(url) {
-	let response;
-	try {
-		response = await fetch(url, { headers: { 'User-Agent': 'any-dl' } });
-	} catch (err) {
-		throw new UserFacingError(`Could not reach the Kick CDN: ${err.message}`);
-	}
-
-	if (!response.ok) {
-		throw new UserFacingError(
-			`Kick CDN returned HTTP ${response.status} for the playlist.`,
-			response.status === 404 ? 'The VOD was probably pruned or made private.' : undefined
-		);
-	}
-
-	return response.text();
-}
 
 function parseAttributes(line) {
 	const attributes = {};
@@ -65,7 +47,10 @@ export function parseMasterPlaylist(text, masterUrl) {
 }
 
 export async function getVariants(masterUrl) {
-	return parseMasterPlaylist(await fetchText(masterUrl), masterUrl);
+	const text = await getText(masterUrl, {
+		hint: 'The video may have been pruned, made private, or restricted to subscribers.',
+	});
+	return parseMasterPlaylist(text, masterUrl);
 }
 
 /**
