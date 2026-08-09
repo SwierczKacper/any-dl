@@ -23,9 +23,9 @@ jobs:
       id-token: write # the OIDC token that stands in for a publish credential
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           # Trusted publishing needs Node 22.14+ and npm 11.5.1+.
           node-version: '22'
