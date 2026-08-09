@@ -30,12 +30,13 @@ export const HELP_TEXT = `
 any-dl — download videos to MP4 in full quality, straight from the terminal
 
 Usage
-  any-dl <url|channel|id> [options]
+  any-dl [site] <url|channel|id> [options]
 
 Supported sites
   kick.com   VODs and clips (more sites are planned)
-             A link picks its site automatically; a bare channel name or id
-             is looked up on Kick.
+             A link picks its site by itself. A bare channel name cannot, so
+             name the site first, use --provider, or set ANY_DL_PROVIDER —
+             while Kick is the only one, it is simply assumed.
 
 Targets
   https://kick.com/<channel>/videos/<id>     a specific VOD
@@ -44,34 +45,37 @@ Targets
   <id>                                       a VOD by id
 
 Options
-  -q, --quality <q>   best, worst, or an exact variant like 1080p60 / 720
-                      (omit it and you get a picker showing sizes)
-      --qualities     list the available qualities and sizes, then exit
-  -o, --output <file> output filename
-                      (default: "<channel> - <date> - <title>.mp4")
-  -d, --dir <dir>     output directory (default: $ANY_DL_DIR, else current dir)
-      --channel-dir   save into a per-channel subdirectory of the output directory
-      --from <time>   start at this position, e.g. 00:12:30
-      --to <time>     stop at this position, e.g. 01:45:00
-      --clips         operate on the channel's clips instead of its VODs
-  -l, --list          list the channel's VODs/clips and exit
-  -n, --limit <n>     how many entries to list (default: 20)
-      --faststart     move the MP4 index to the front (extra pass, slow on big files)
-  -y, --yes           no prompts: best quality, and fail if it will not fit on disk
-      --json          print machine-readable metadata to stdout instead of downloading
-      --progress <m>  auto (default), json for NDJSON on stdout, or none
-      --no-progress   alias for --progress none
-  -h, --help          show this help
-  -v, --version       show the version
+  -q, --quality <q>     best, worst, or an exact variant like 1080p60 / 720
+                        (omit it and you get a picker showing sizes)
+      --qualities       list the available qualities and sizes, then exit
+  -o, --output <file>   output filename
+                        (default: "<channel> - <date> - <title>.mp4")
+  -d, --dir <dir>       output directory (default: $ANY_DL_DIR, else current dir)
+      --channel-dir     save into a per-channel subdirectory of the output directory
+      --provider <site> which site to use, when a link does not already say
+      --from <time>     start at this position, e.g. 00:12:30
+      --to <time>       stop at this position, e.g. 01:45:00
+      --clips           operate on the channel's clips instead of its VODs
+  -l, --list            list the channel's VODs/clips and exit
+  -n, --limit <n>       how many entries to list (default: 20)
+      --faststart       move the MP4 index to the front (extra pass, slow on big files)
+  -y, --yes             no prompts: best quality, and fail if it will not fit on disk
+      --json            print machine-readable metadata to stdout instead of downloading
+      --progress <m>    auto (default), json for NDJSON on stdout, or none
+      --no-progress     alias for --progress none
+  -h, --help            show this help
+  -v, --version         show the version
 
 Environment
-  ANY_DL_DIR   default output directory, so you can run this from anywhere
-  CHROME_PATH  path to a Chrome/Chromium binary (auto-detected otherwise)
-  FFMPEG_PATH  path to an ffmpeg binary (auto-detected otherwise)
+  ANY_DL_DIR       default output directory, so you can run this from anywhere
+  ANY_DL_PROVIDER  the site to assume for bare channel names
+  CHROME_PATH      path to a Chrome/Chromium binary (auto-detected otherwise)
+  FFMPEG_PATH      path to an ffmpeg binary (auto-detected otherwise)
 
 Examples
   any-dl https://kick.com/somechannel/videos/019fdd44-f600-7184-bf35-ff795a9b372c
   any-dl somechannel --quality 720p60 --dir ~/Videos
+  any-dl kick somechannel
   any-dl <url> --dir ~/Videos --channel-dir
   any-dl <url> --from 01:00:00 --to 01:15:00 -o highlight.mp4
 
@@ -83,6 +87,9 @@ See the README for the full disclaimer.
 export function parseArgs(argv) {
 	const options = {
 		target: null,
+		// Which site to use, when the target itself does not say. Set by
+		// --provider, or by naming it first: `any-dl kick xqc`.
+		provider: null,
 		// null means "ask" — an explicit --quality skips the picker.
 		quality: null,
 		output: null,
@@ -104,12 +111,13 @@ export function parseArgs(argv) {
 		version: false,
 	};
 
+	const positionals = [];
+
 	for (let i = 0; i < argv.length; i += 1) {
 		let arg = argv[i];
 
 		if (!arg.startsWith('-')) {
-			if (options.target) throw new UserFacingError(`Unexpected extra argument: ${arg}`);
-			options.target = arg;
+			positionals.push(arg);
 			continue;
 		}
 
@@ -159,6 +167,7 @@ export function parseArgs(argv) {
 				options.progress = mode;
 				break;
 			}
+			case '--provider': options.provider = takeValue(); break;
 			case '--help': options.help = true; break;
 			case '--version': options.version = true; break;
 			default:
@@ -168,6 +177,28 @@ export function parseArgs(argv) {
 		if (inlineValue != null && FLAGS.has(name)) {
 			throw new UserFacingError(`Option ${name} does not take a value.`);
 		}
+	}
+
+	// One argument is the target. Two means the site was named first, as in
+	// `any-dl kick xqc` — which is also how you reach a channel whose name
+	// happens to match a site.
+	if (positionals.length > 2) {
+		throw new UserFacingError(
+			`Unexpected extra argument: ${positionals[2]}`,
+			'Expected at most a site and a target, e.g. any-dl kick somechannel.'
+		);
+	}
+
+	if (positionals.length === 2) {
+		if (options.provider && options.provider !== positionals[0]) {
+			throw new UserFacingError(
+				`Two different sites given: ${positionals[0]} and --provider ${options.provider}.`
+			);
+		}
+		options.provider = positionals[0];
+		options.target = positionals[1];
+	} else {
+		options.target = positionals[0] ?? null;
 	}
 
 	return options;

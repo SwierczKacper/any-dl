@@ -1,5 +1,21 @@
 # Changelog
 
+## 3.1.0
+
+- Choosing a site is now possible without a link. Name it before the target —
+  `any-dl kick somechannel` — or pass `--provider kick`, or set
+  `ANY_DL_PROVIDER`. Naming it first is also how you reach a channel whose name
+  happens to match a site.
+- A link still decides by itself, and always wins; a link that contradicts an
+  explicitly named site is refused rather than quietly overruled.
+- Running the command with no arguments now asks for "a link, or a channel
+  name" in one prompt, rather than asking which site first. A pasted link
+  answers that question already, so most people never see it.
+- When a bare name really is ambiguous, a picker appears — but only once more
+  than one site is supported. With a single site the answer is known, so
+  nothing is asked. Without a terminal, an ambiguous name fails with a message
+  naming `--provider` instead of guessing.
+
 ## 3.0.0
 
 - Sites are now handled by providers: one module per site under

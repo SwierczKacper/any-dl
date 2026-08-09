@@ -53,8 +53,32 @@ test('parseArgs rejects an option that is missing its value', () => {
 	assert.throws(() => parseArgs(['x', '--quality']), /needs a value/);
 });
 
-test('parseArgs rejects a second positional argument', () => {
-	assert.throws(() => parseArgs(['one', 'two']), /Unexpected extra argument/);
+test('parseArgs reads a second positional as the site', () => {
+	const options = parseArgs(['kick', 'somechannel']);
+
+	assert.equal(options.provider, 'kick');
+	assert.equal(options.target, 'somechannel');
+});
+
+test('parseArgs rejects a third positional argument', () => {
+	assert.throws(() => parseArgs(['kick', 'one', 'two']), /Unexpected extra argument/);
+});
+
+test('parseArgs reads --provider', () => {
+	assert.equal(parseArgs(['--provider', 'kick', 'somechannel']).provider, 'kick');
+	assert.equal(parseArgs(['--provider=kick', 'somechannel']).provider, 'kick');
+	assert.equal(parseArgs(['somechannel']).provider, null);
+});
+
+test('parseArgs refuses two different sites', () => {
+	assert.throws(() => parseArgs(['--provider', 'kick', 'twitch', 'somechannel']), /two different sites/i);
+});
+
+test('parseArgs accepts the site given twice the same way', () => {
+	const options = parseArgs(['--provider', 'kick', 'kick', 'somechannel']);
+
+	assert.equal(options.provider, 'kick');
+	assert.equal(options.target, 'somechannel');
 });
 
 test('parseArgs allows no target at all', () => {
