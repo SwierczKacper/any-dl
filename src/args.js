@@ -33,14 +33,18 @@ Usage
   any-dl [site] <url|channel|id> [options]
 
 Supported sites
-  kick.com   VODs and clips (more sites are planned)
-             A link picks its site by itself. A bare channel name cannot, so
-             name the site first, use --provider, or set ANY_DL_PROVIDER —
-             while Kick is the only one, it is simply assumed.
+  kick.com     VODs and clips
+  twitch.tv    VODs and clips
+
+  A link picks its site by itself. A bare channel name cannot, so name the site
+  first, use --provider, or set ANY_DL_PROVIDER — otherwise you are asked which
+  one you meant.
 
 Targets
   https://kick.com/<channel>/videos/<id>     a specific VOD
   https://kick.com/<channel>?clip=clip_xxx   a specific clip
+  https://www.twitch.tv/videos/<id>          a specific VOD
+  https://clips.twitch.tv/<slug>             a specific clip
   <channel>                                  pick from that channel's latest VODs
   <id>                                       a VOD by id
 
@@ -71,18 +75,20 @@ Environment
   ANY_DL_DIR       default output directory, so you can run this from anywhere
   ANY_DL_PROVIDER  the site to assume for bare channel names
   CHROME_PATH      path to a Chrome/Chromium binary (auto-detected otherwise)
+                   needed for Kick only; Twitch does not use a browser
   FFMPEG_PATH      path to an ffmpeg binary (auto-detected otherwise)
 
 Examples
   any-dl https://kick.com/somechannel/videos/019fdd44-f600-7184-bf35-ff795a9b372c
-  any-dl somechannel --quality 720p60 --dir ~/Videos
-  any-dl kick somechannel
+  any-dl https://www.twitch.tv/videos/2832871456
+  any-dl kick somechannel --quality 720p60 --dir ~/Videos
+  any-dl twitch somechannel --list
   any-dl <url> --dir ~/Videos --channel-dir
   any-dl <url> --from 01:00:00 --to 01:15:00 -o highlight.mp4
 
-Not affiliated with Kick. For personal, lawful use only — you are responsible
-for respecting Kick's Terms of Service and the rights of content creators.
-See the README for the full disclaimer.
+Not affiliated with Kick or Twitch. For personal, lawful use only — you are
+responsible for respecting each site's Terms of Service and the rights of
+content creators. See the README for the full disclaimer.
 `.trim();
 
 export function parseArgs(argv) {

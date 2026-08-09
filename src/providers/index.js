@@ -1,5 +1,6 @@
 import { UserFacingError } from '../util.js';
 import * as kick from './kick.js';
+import * as twitch from './twitch.js';
 
 /**
  * Every site the tool knows how to read. Adding one means writing a module
@@ -7,12 +8,14 @@ import * as kick from './kick.js';
  * `getVideo`, `getClip`, `getChannelVods` and `getChannelClips`, then listing
  * it below. Nothing outside this directory should need to change.
  */
-export const PROVIDERS = [kick];
+export const PROVIDERS = [kick, twitch];
 
 /**
- * Where input that names no site of its own goes. A bare channel name looks
- * identical on every site, so it cannot be routed by inspection — something
- * has to decide, and until a second provider exists that decision is trivial.
+ * Where input that names no site of its own goes when nothing else has decided.
+ * A bare channel name looks identical on every site, so it cannot be routed by
+ * inspection — and now that there is more than one site, the honest answer is
+ * to ask rather than to assume. This remains the last resort for the paths that
+ * cannot ask, and stays on Kick because that is the site this tool started as.
  */
 export const DEFAULT_PROVIDER = kick;
 

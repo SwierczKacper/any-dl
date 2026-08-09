@@ -1,4 +1,4 @@
-import { parseKickDate } from './util.js';
+import { parseTimestamp } from './util.js';
 
 const useColor =
 	process.stdout.isTTY && !process.env.NO_COLOR && process.env.TERM !== 'dumb';
@@ -41,7 +41,7 @@ export function formatDuration(totalSeconds) {
 
 /** Rendered in the viewer's local timezone. */
 export function formatDate(value) {
-	const date = parseKickDate(value);
+	const date = parseTimestamp(value);
 	if (!date) return value ? String(value) : 'unknown date';
 
 	const pad = (n) => String(n).padStart(2, '0');

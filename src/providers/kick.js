@@ -1,5 +1,5 @@
 import { fetchJson } from '../browser.js';
-import { isUuid, parseKickDate, UserFacingError, uuidV7Timestamp } from '../util.js';
+import { isUuid, parseTimestamp, UserFacingError, uuidV7Timestamp } from '../util.js';
 
 const API_BASE = 'https://kick.com/api';
 
@@ -128,7 +128,7 @@ async function findVodByStartTime(channel, startedAt) {
 	const candidates = await getChannelVods(channel, { limit: 100 });
 
 	return candidates.find((vod) => {
-		const listed = parseKickDate(vod.startTime);
+		const listed = parseTimestamp(vod.startTime);
 		return listed != null && Math.abs(listed.getTime() - startedAt.getTime()) <= START_TIME_TOLERANCE_MS;
 	});
 }

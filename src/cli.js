@@ -337,9 +337,14 @@ export async function run(argv) {
 	const target = provider.parseTarget(targetInput);
 	const { from, to } = parseTimeRange(options);
 
-	const media = await resolveMedia(target, provider, options);
+	const chosen = await resolveMedia(target, provider, options);
 
-	if (media === null) return 0; // --list, or the picker was cancelled
+	if (chosen === null) return 0; // --list, or the picker was cancelled
+
+	// A listing entry may not carry a stream URL: on some sites getting one means
+	// a signed request per entry, which is too much work to draw a menu. Filling
+	// it in here means only the item actually picked is paid for.
+	const media = provider.resolvePlayable ? await provider.resolvePlayable(chosen) : chosen;
 
 	// Clips are plain MP4s; VODs go through an HLS master playlist.
 	const variants = media.masterUrl ? await getVariants(media.masterUrl) : [];
@@ -495,7 +500,7 @@ export async function run(argv) {
 			'ffmpeg produced an empty file — nothing was downloaded.',
 			from != null || to != null
 				? 'The requested range is probably shorter than the distance to the next keyframe. Widen it (10 seconds or more) and try again.'
-				: 'The stream may have been pruned by Kick. Retry, or try a different quality.'
+				: `The stream may have been pruned by ${provider.label}. Retry, or try a different quality.`
 		);
 	}
 

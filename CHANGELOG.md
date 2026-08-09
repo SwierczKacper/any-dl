@@ -1,5 +1,38 @@
 # Changelog
 
+## 4.0.0
+
+- **Twitch is supported**, VODs and clips, from a link or a channel name. It
+  needs no browser: unlike Kick there is no Cloudflare in the way, so if Twitch
+  is all you use, ffmpeg is the only requirement left.
+- The queries sent to Twitch are written out in full rather than sent as
+  persisted queries — an operation name plus a hash of a query Twitch already
+  knows. Hashes are what most tools use and they are the usual reason those
+  tools break, since Twitch rotates them whenever the schema moves. This costs
+  one larger request and keeps working across those changes.
+- **Breaking: a bare channel name is no longer assumed to be a Kick channel.**
+  A name looks the same on every site, and with two sites there is a real
+  question to answer, so `any-dl somechannel` now asks which one you meant.
+  Announced in 3.1.0, and this is where it lands.
+  - In a terminal, a picker appears. Name the site first to skip it:
+    `any-dl kick somechannel`.
+  - **In a script there is nobody to ask, so it now fails** rather than
+    silently downloading from the wrong site. Set `ANY_DL_PROVIDER=kick` once,
+    or pass `--provider kick`, to restore the previous behaviour exactly.
+  - A link is unaffected: it says which site it belongs to and always has.
+- A quality is now named after its resolution rather than the playlist's
+  internal group id. The two agree on Kick, but Twitch calls the source
+  rendition `chunked` — which would have appeared in the picker under that
+  name, and made `--quality 1080p60` miss the variant that is 1080p60.
+- Fetching a playlist has a timeout. A CDN that accepted the connection and then
+  went quiet used to hang the tool until it was killed.
+- Error messages name the site that actually failed instead of always saying
+  Kick, and `npm run smoke` covers both sites — it had been pointing at a module
+  path that moved in 3.0.0, so it had not run since.
+
+The `--json`, `--list --json` and `--progress json` shapes are unchanged, and
+`schemaVersion` stays at 1. Twitch items simply arrive with `provider: "twitch"`.
+
 ## 3.2.0
 
 - Press `c` in the channel picker to swap between a channel's VODs and its

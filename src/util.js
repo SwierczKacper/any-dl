@@ -55,7 +55,7 @@ export function sanitizeFilename(name, maxLength = 120) {
 		.trim();
 
 	if (clean.length > maxLength) clean = clean.slice(0, maxLength).trim();
-	if (!clean || RESERVED_WINDOWS_NAMES.test(clean)) clean = 'kick-video';
+	if (!clean || RESERVED_WINDOWS_NAMES.test(clean)) clean = 'video';
 
 	return clean;
 }
@@ -162,11 +162,14 @@ export function parseTimecode(input) {
 }
 
 /**
- * Kick mixes timestamp formats: "2026-08-07T17:28:32+00:00" in some responses,
- * "2026-08-07 17:28:32" in others. The second form is UTC too, but Date() would
- * read it as local time — so pin it to UTC explicitly.
+ * Every timestamp a site hands us, whatever shape it arrives in.
+ *
+ * Kick mixes two: "2026-08-07T17:28:32+00:00" in some responses and
+ * "2026-08-07 17:28:32" in others. The second is UTC as well, but Date() reads
+ * it as local time — so the offset is pinned explicitly. Twitch only ever sends
+ * the first form, and passes through unchanged.
  */
-export function parseKickDate(value) {
+export function parseTimestamp(value) {
 	if (!value) return null;
 
 	let text = String(value).trim().replace(' ', 'T');
