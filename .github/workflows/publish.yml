@@ -56,5 +56,23 @@ jobs:
       - name: Test
         run: npm test
 
+      # A version already on the registry cannot be published again, and npm is
+      # right to refuse. Tagging a release whose version was published by hand —
+      # as the very first release of a package must be, since a trusted
+      # publisher cannot be configured before the package exists — would
+      # otherwise fail the workflow for doing nothing wrong.
+      - name: Is this version already published?
+        id: published
+        run: |
+          PKG="$(node -p "require('./package.json').name")"
+          VER="$(node -p "require('./package.json').version")"
+          if npm view "$PKG@$VER" version > /dev/null 2>&1; then
+            echo "already=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::$PKG@$VER is already on the registry; skipping publish."
+          else
+            echo "already=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish
+        if: steps.published.outputs.already == 'false'
         run: npm publish
