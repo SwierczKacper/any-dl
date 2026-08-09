@@ -17,6 +17,21 @@ const MASTER_PLAYLIST = `#EXTM3U
 480p30/playlist.m3u8
 `;
 
+// Twitch names its source rendition's group "chunked" and reports a frame rate
+// that is nearly but not exactly 60. Taken from a real master playlist, because
+// the naming rule exists precisely to survive this shape.
+const CHUNKED_PLAYLIST = `#EXTM3U
+#EXT-X-MEDIA:TYPE=VIDEO,GROUP-ID="chunked",NAME="1080p60",AUTOSELECT=NO,DEFAULT=NO
+#EXT-X-STREAM-INF:BANDWIDTH=8449068,CODECS="avc1.640029,mp4a.40.2",RESOLUTION=1920x1080,VIDEO="chunked",FRAME-RATE=59.866
+https://cdn.example.net/vod/chunked/index.m3u8
+#EXT-X-MEDIA:TYPE=VIDEO,GROUP-ID="720p60",NAME="720p60",AUTOSELECT=YES,DEFAULT=YES
+#EXT-X-STREAM-INF:BANDWIDTH=3445205,CODECS="avc1.4D401F,mp4a.40.2",RESOLUTION=1280x720,VIDEO="720p60",FRAME-RATE=59.866
+https://cdn.example.net/vod/720p60/index.m3u8
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio_only",NAME="Audio Only",AUTOSELECT=NO,DEFAULT=NO
+#EXT-X-STREAM-INF:BANDWIDTH=182675,CODECS="mp4a.40.2",VIDEO="audio_only"
+https://cdn.example.net/vod/audio_only/index.m3u8
+`;
+
 test('parseMasterPlaylist extracts every variant', () => {
 	const variants = parseMasterPlaylist(MASTER_PLAYLIST, MASTER_URL);
 	assert.equal(variants.length, 3);
@@ -47,6 +62,36 @@ test('parseMasterPlaylist resolves variant URLs against the master', () => {
 
 test('parseMasterPlaylist rejects a playlist with no variants', () => {
 	assert.throws(() => parseMasterPlaylist('#EXTM3U\n', MASTER_URL), /no video variants/);
+});
+
+test('parseMasterPlaylist names a variant by its resolution, not its group id', () => {
+	const variants = parseMasterPlaylist(CHUNKED_PLAYLIST, MASTER_URL);
+	// "chunked" is an internal name for the source rendition. Nobody asks for it,
+	// and putting it in the picker would hide what the variant actually is.
+	assert.deepEqual(
+		variants.map((variant) => variant.name),
+		['1080p60', '720p60', 'audio_only']
+	);
+});
+
+test('parseMasterPlaylist rounds a frame rate that is not quite whole', () => {
+	const [best] = parseMasterPlaylist(CHUNKED_PLAYLIST, MASTER_URL);
+	// 59.866 is what a real playlist reports; "1080p59.866" is not a quality
+	// anyone would type.
+	assert.equal(best.frameRate, 60);
+});
+
+test('parseMasterPlaylist falls back to the group id when there is no resolution', () => {
+	const variants = parseMasterPlaylist(CHUNKED_PLAYLIST, MASTER_URL);
+	const audio = variants.at(-1);
+	assert.equal(audio.name, 'audio_only');
+	assert.equal(audio.height, null);
+});
+
+test('selectVariant reaches a source rendition by the name it is shown under', () => {
+	const variants = parseMasterPlaylist(CHUNKED_PLAYLIST, MASTER_URL);
+	assert.equal(selectVariant(variants, '1080p60').url, 'https://cdn.example.net/vod/chunked/index.m3u8');
+	assert.equal(selectVariant(variants, '1080').url, 'https://cdn.example.net/vod/chunked/index.m3u8');
 });
 
 test('selectVariant defaults to the best quality', () => {
