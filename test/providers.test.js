@@ -3,7 +3,6 @@ import test from 'node:test';
 
 import * as kick from '../src/providers/kick.js';
 import {
-	DEFAULT_PROVIDER,
 	providerByKey,
 	PROVIDERS,
 	providerFor,
@@ -41,11 +40,25 @@ test('a link is routed by its hostname', () => {
 	assert.equal(providerFor('https://www.kick.com/xmerghani').key, 'kick');
 });
 
-test('a bare channel name goes to the default provider', () => {
-	// Nothing in "xmerghani" says which site it belongs to, so it cannot be
-	// routed by inspection — the default decides until --provider exists.
-	assert.equal(providerFor('xmerghani'), DEFAULT_PROVIDER);
-	assert.equal(providerFor('clip_01ABCDEF'), DEFAULT_PROVIDER);
+test('a bare channel name is refused here rather than guessed at', () => {
+	// Nothing in "xmerghani" says which site it belongs to, so there is no
+	// answer this function could honestly give. Deciding is resolveProvider's
+	// job, because only it can ask.
+	assert.throws(() => providerFor('xmerghani'), /not a link/i);
+	assert.throws(() => providerFor('clip_01ABCDEF'), /not a link/i);
+});
+
+test('the refusal names a way to be explicit', () => {
+	// The hint is a separate field, not part of the message, so check it directly.
+	let error;
+	try {
+		providerFor('xmerghani', two);
+	} catch (thrown) {
+		error = thrown;
+	}
+	assert.ok(error, 'expected a refusal');
+	assert.match(error.hint, /--provider/);
+	assert.match(error.hint, /any-dl alpha xmerghani/);
 });
 
 test('a link to an unsupported site is refused by name', () => {

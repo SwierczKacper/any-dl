@@ -9,8 +9,8 @@ export const label = 'Kick';
 
 /**
  * Whether a link belongs to this provider. Only URLs are decided here: a bare
- * channel name looks the same on every site, so the registry routes those to
- * the default provider instead of asking each one.
+ * channel name looks the same on every site, so there is nothing for a provider
+ * to recognise and the registry asks the user instead.
  */
 export function matchUrl(url) {
 	return /(^|\.)kick\.com$/i.test(url.hostname);
