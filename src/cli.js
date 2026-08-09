@@ -4,10 +4,11 @@ import readline from 'node:readline';
 import { fileURLToPath } from 'node:url';
 
 import { HELP_TEXT, parseArgs } from './args.js';
+import { listingToJson, mediaToJson } from './contract.js';
 import { download } from './ffmpeg.js';
 import { describeVariant, estimateBytes, getVariants, selectVariant } from './hls.js';
-import * as kick from './kick.js';
 import { confirm, input, isInteractive, select } from './prompt.js';
+import { providerFor } from './providers/index.js';
 import {
 	c,
 	formatBytes,
@@ -103,16 +104,16 @@ function toChoices(items) {
 }
 
 /** Resolve the CLI target into a single VOD/clip, prompting when needed. */
-async function resolveMedia(target, options) {
-	if (target.type === 'video') return kick.getVideo(target.uuid, { channel: target.channel });
-	if (target.type === 'clip') return kick.getClip(target.id);
+async function resolveMedia(target, provider, options) {
+	if (target.type === 'video') return provider.getVideo(target.id, { channel: target.channel });
+	if (target.type === 'clip') return provider.getClip(target.id);
 
 	const label = options.clips ? 'clips' : 'VODs';
 	info(`Fetching ${label} for ${c.bold(target.channel)}…`);
 
 	const items = options.clips
-		? await kick.getChannelClips(target.channel, { limit: options.limit })
-		: await kick.getChannelVods(target.channel, { limit: options.limit });
+		? await provider.getChannelClips(target.channel, { limit: options.limit })
+		: await provider.getChannelVods(target.channel, { limit: options.limit });
 
 	if (items.length === 0) {
 		throw new UserFacingError(`No ${label} found for channel "${target.channel}".`);
@@ -122,13 +123,13 @@ async function resolveMedia(target, options) {
 		if (options.json) {
 			// Same shape as a single --json result, minus the stream URL, which
 			// would mean fetching every playlist just to list them.
-			process.stdout.write(`${JSON.stringify(items, null, 2)}\n`);
+			process.stdout.write(`${JSON.stringify(listingToJson(items, provider), null, 2)}\n`);
 			return null;
 		}
 
 		for (const [index, item] of items.entries()) {
 			process.stdout.write(
-				`${String(index + 1).padStart(2)}. ${item.title}\n    ${describeMedia(item)}\n    https://kick.com/${item.channel}/videos/${item.uuid}\n`
+				`${String(index + 1).padStart(2)}. ${item.title}\n    ${describeMedia(item)}\n    ${provider.webUrl(item)}\n`
 			);
 		}
 		return null;
@@ -286,14 +287,15 @@ export async function run(argv) {
 			process.stdout.write(`${HELP_TEXT}\n`);
 			return 1;
 		}
-		targetInput = await input({ message: 'Kick VOD link or channel name' });
+		targetInput = await input({ message: 'Video link or channel name' });
 		if (!targetInput) return 130;
 	}
 
-	const target = kick.parseTarget(targetInput);
+	const provider = providerFor(targetInput);
+	const target = provider.parseTarget(targetInput);
 	const { from, to } = parseTimeRange(options);
 
-	const media = await resolveMedia(target, options);
+	const media = await resolveMedia(target, provider, options);
 
 	if (media === null) return 0; // --list, or the picker was cancelled
 
@@ -314,12 +316,11 @@ export async function run(argv) {
 		const chosen = variants.length > 0 ? selectVariant(variants, options.quality ?? 'best') : null;
 		process.stdout.write(
 			`${JSON.stringify(
-				{
-					...media,
+				mediaToJson(media, provider, {
 					selectedQuality: chosen?.name ?? 'original',
 					sourceUrl: chosen ? chosen.url : media.directUrl,
 					availableQualities: variants.map((v) => v.name),
-				},
+				}),
 				null,
 				2
 			)}\n`

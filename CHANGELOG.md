@@ -1,5 +1,27 @@
 # Changelog
 
+## 3.0.0
+
+- Sites are now handled by providers: one module per site under
+  `src/providers/`, picked by the link's hostname. Adding a site means writing
+  that module and listing it in the registry — `cli.js` no longer knows about
+  any particular site. A bare channel name still goes to Kick, because nothing
+  in a name says which site it belongs to; a `--provider` flag can decide that
+  once there is a second one.
+- The machine-readable output is normalised, and is now assembled field by
+  field instead of being whatever the Kick module happened to return. That old
+  approach meant each new site would have quietly renamed or widened the
+  contract:
+  - `uuid` is now `id`, since other sites do not use UUIDs.
+  - `masterUrl` and `directUrl` no longer appear. They are how a provider
+    fetches a thing, not something a caller should read. `sourceUrl` is
+    unchanged and is still what you hand to a player or to ffmpeg.
+  - `provider`, `webUrl` and `schemaVersion` were added. `schemaVersion` is
+    bumped only when a field is removed or changes meaning, never when one is
+    added.
+- A link to a site that is not supported now fails saying which site it was and
+  which ones are supported, instead of "Not a kick.com link".
+
 ## 2.0.0
 
 - Renamed to any-dl. The old name described one site, and support for more is

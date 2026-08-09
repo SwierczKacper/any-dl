@@ -30,16 +30,18 @@ export const HELP_TEXT = `
 any-dl — download videos to MP4 in full quality, straight from the terminal
 
 Usage
-  any-dl <url|channel|uuid> [options]
+  any-dl <url|channel|id> [options]
 
 Supported sites
   kick.com   VODs and clips (more sites are planned)
+             A link picks its site automatically; a bare channel name or id
+             is looked up on Kick.
 
 Targets
-  https://kick.com/<channel>/videos/<uuid>   a specific VOD
+  https://kick.com/<channel>/videos/<id>     a specific VOD
   https://kick.com/<channel>?clip=clip_xxx   a specific clip
   <channel>                                  pick from that channel's latest VODs
-  <uuid>                                     a VOD by id
+  <id>                                       a VOD by id
 
 Options
   -q, --quality <q>   best, worst, or an exact variant like 1080p60 / 720
