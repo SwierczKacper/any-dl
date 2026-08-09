@@ -32,6 +32,18 @@ Want one that is not listed? Ask — the order is not fixed.
 - **Resuming an interrupted download** instead of starting the file again.
 - **Batch input** — a file of links, or every VOD on a channel.
 
+## Ideas
+
+Not planned — things worth looking into, kept here so they are not lost. Each
+needs someone to work out whether it is possible and whether it is worth doing
+before it becomes anything more than a line in this section.
+
+- **Saving a stream's chat alongside the video.** A VOD replays its chat in the
+  browser, so the messages exist somewhere and can presumably be fetched — as a
+  file next to the MP4 at first, and perhaps burned into the picture later. How
+  far this goes depends entirely on the site: what a replay exposes differs
+  between them, and some may expose nothing at all.
+
 ## Maintenance
 
 - Regenerate the sample output in the README whenever the display changes; it
