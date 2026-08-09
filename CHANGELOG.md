@@ -1,5 +1,23 @@
 # Changelog
 
+## 2.0.0
+
+- Renamed to any-dl. The old name described one site, and support for more is
+  planned — a name that would have to be abandoned later is worse than one
+  changed now, while the package is days old. Install it with
+  `npm install -g any-dl`; the kick-vod package is deprecated and points here.
+- The command is now `any-dl`. There is deliberately no `kick-vod` alias, so
+  both packages can sit on a machine without fighting over the same name on
+  PATH.
+- `KICK_VOD_DIR` became `ANY_DL_DIR`. The old variable is no longer read, so a
+  shell profile that sets it needs updating.
+- The cached Chrome profile moved to `any-dl-chrome-profile` in the temp
+  directory. The Cloudflare clearance cookie is therefore fetched once more on
+  the first run after upgrading.
+
+Nothing about what the tool does changed: the same targets, options and output
+formats, including `--json`, `--list --json` and `--progress json`.
+
 ## 1.9.0
 
 - Add --progress json, emitting NDJSON on stdout for programs driving the tool

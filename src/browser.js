@@ -11,7 +11,7 @@ const USER_AGENT =
 	'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
 // Persisted so Cloudflare's clearance cookie survives between invocations.
-const PROFILE_DIR = join(tmpdir(), 'kick-vod-chrome-profile');
+const PROFILE_DIR = join(tmpdir(), 'any-dl-chrome-profile');
 
 const LINUX_CANDIDATES = [
 	'/usr/bin/google-chrome',

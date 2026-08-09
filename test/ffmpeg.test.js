@@ -84,7 +84,7 @@ function makeSampleVideo(dir) {
 }
 
 test('download reports how much it actually wrote', { skip: SKIP_INTEGRATION, timeout: 60_000 }, async () => {
-	const dir = mkdtempSync(join(tmpdir(), 'kick-vod-ffmpeg-'));
+	const dir = mkdtempSync(join(tmpdir(), 'any-dl-ffmpeg-'));
 	const source = makeSampleVideo(dir);
 	if (!source) return; // this ffmpeg build cannot produce the fixture
 
@@ -95,7 +95,7 @@ test('download reports how much it actually wrote', { skip: SKIP_INTEGRATION, ti
 });
 
 test('download reports ~0 seconds when the range yields no frames', { skip: SKIP_INTEGRATION, timeout: 60_000 }, async () => {
-	const dir = mkdtempSync(join(tmpdir(), 'kick-vod-ffmpeg-'));
+	const dir = mkdtempSync(join(tmpdir(), 'any-dl-ffmpeg-'));
 	const source = makeSampleVideo(dir);
 	if (!source) return;
 

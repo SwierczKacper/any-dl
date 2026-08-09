@@ -2,7 +2,7 @@
 
 Requests are as welcome as code. If the tool is missing something you need —
 however small, however obvious it seems — [open an
-issue](https://github.com/SwierczKacper/kick-vod/issues/new/choose). You do not
+issue](https://github.com/SwierczKacper/any-dl/issues/new/choose). You do not
 need to suggest how it should work, or be sure it is possible. Describing what
 annoyed you is enough to act on.
 
@@ -25,10 +25,10 @@ is useful even with no detail beyond the command and its output.
 There is no build step and no required dependencies.
 
 ```bash
-git clone https://github.com/SwierczKacper/kick-vod.git
-cd kick-vod
+git clone https://github.com/SwierczKacper/any-dl.git
+cd any-dl
 npm install          # optional bundled ffmpeg
-node bin/kick-vod.js --help
+node bin/any-dl.js --help
 npm test             # 114 tests, all offline
 ```
 

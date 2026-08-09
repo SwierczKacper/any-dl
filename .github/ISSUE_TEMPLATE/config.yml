@@ -4,5 +4,5 @@ blank_issues_enabled: true
 
 contact_links:
   - name: Question, or not sure it is a bug
-    url: https://github.com/SwierczKacper/kick-vod/discussions
+    url: https://github.com/SwierczKacper/any-dl/discussions
     about: Ask anything — how to do something, whether something is possible, or just to say what you use it for.
