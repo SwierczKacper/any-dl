@@ -330,7 +330,11 @@ export async function run(argv) {
 		target: targetInput,
 		provider: options.provider,
 		env: process.env.ANY_DL_PROVIDER,
-		chooseSite: isInteractive() ? chooseSite : null,
+		// --yes means "ask me nothing", and there is no sensible default site to
+		// fall back on, so an ambiguous name fails there exactly as it does with
+		// no terminal at all. Picking one for the user would be the guess this
+		// whole path exists to avoid.
+		chooseSite: isInteractive() && !options.yes ? chooseSite : null,
 	});
 	if (provider === null) return 130; // the site picker was cancelled
 

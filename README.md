@@ -172,7 +172,8 @@ export FFMPEG_PATH=/usr/local/bin/ffmpeg
 
 Two more exist: `ANY_DL_DIR` sets where downloads go — see
 [Where files land](#where-files-land-and-what-theyre-called) — and
-`ANY_DL_PROVIDER` sets the site to assume for bare channel names.
+`ANY_DL_PROVIDER` answers the "which site?" question for bare channel names,
+so you are not asked each time.
 
 No Chrome anywhere on the machine? Fetch a private copy (this does **not** add a
 dependency to the project — it just puts a browser on disk):
@@ -254,8 +255,8 @@ this order:
 4. a picker, asking which site you meant
 
 Naming the site first is also how you reach a channel whose name happens to
-match a site. Without a terminal — in a script, or under `--yes` — there is
-nobody to ask, so a bare name fails telling you to be explicit rather than
+match a site. Where there is nobody to ask — no terminal, or `--yes`, which
+promises no prompts — a bare name fails telling you to be explicit rather than
 guessing at one site and silently downloading from the wrong place. Set
 `ANY_DL_PROVIDER` once if your scripts always mean the same site:
 

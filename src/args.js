@@ -64,7 +64,8 @@ Options
   -l, --list            list the channel's VODs/clips and exit
   -n, --limit <n>       how many entries to list (default: 20)
       --faststart       move the MP4 index to the front (extra pass, slow on big files)
-  -y, --yes             no prompts: best quality, and fail if it will not fit on disk
+  -y, --yes             no prompts: best quality, fail if it will not fit on disk,
+                        and fail rather than ask which site a bare name means
       --json            print machine-readable metadata to stdout instead of downloading
       --progress <m>    auto (default), json for NDJSON on stdout, or none
       --no-progress     alias for --progress none
@@ -73,7 +74,7 @@ Options
 
 Environment
   ANY_DL_DIR       default output directory, so you can run this from anywhere
-  ANY_DL_PROVIDER  the site to assume for bare channel names
+  ANY_DL_PROVIDER  the site to use for bare channel names, instead of asking
   CHROME_PATH      path to a Chrome/Chromium binary (auto-detected otherwise)
                    needed for Kick only; Twitch does not use a browser
   FFMPEG_PATH      path to an ffmpeg binary (auto-detected otherwise)
