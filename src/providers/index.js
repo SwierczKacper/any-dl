@@ -11,26 +11,27 @@ import * as twitch from './twitch.js';
 export const PROVIDERS = [kick, twitch];
 
 /**
- * Where input that names no site of its own goes when nothing else has decided.
- * A bare channel name looks identical on every site, so it cannot be routed by
- * inspection — and now that there is more than one site, the honest answer is
- * to ask rather than to assume. This remains the last resort for the paths that
- * cannot ask, and stays on Kick because that is the site this tool started as.
- */
-export const DEFAULT_PROVIDER = kick;
-
-/**
- * The provider that should handle this input, by hostname when there is one.
+ * The provider a link belongs to, decided by its hostname.
  *
- * `providers` is injectable so the multi-site paths can be tested while only
- * one site exists — otherwise the code that matters most here would go
- * unexercised until the day a second one is added.
+ * Links only. A bare channel name looks identical on every site, so there is
+ * nothing here to inspect and nothing this function could honestly return —
+ * that question belongs to `resolveProvider`, which can ask. There is
+ * deliberately no default site: assuming one would mean quietly downloading
+ * from somewhere the user did not name.
+ *
+ * `providers` is injectable so these paths stay testable independently of
+ * whichever sites happen to be registered.
  */
 export function providerFor(input, providers = PROVIDERS) {
 	const raw = String(input ?? '').trim();
 	if (!raw) throw new UserFacingError('No channel or link given.');
 
-	if (!isUrl(raw)) return providers.length === 1 ? providers[0] : DEFAULT_PROVIDER;
+	if (!isUrl(raw)) {
+		throw new UserFacingError(
+			`"${raw}" is not a link, so there is no site to read from it.`,
+			`Say which with --provider, or name it first: any-dl ${providers[0].key} ${raw}.`
+		);
+	}
 
 	let url;
 	try {
