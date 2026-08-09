@@ -4,7 +4,7 @@ import { UserFacingError } from './util.js';
 async function fetchText(url) {
 	let response;
 	try {
-		response = await fetch(url, { headers: { 'User-Agent': 'kick-vod' } });
+		response = await fetch(url, { headers: { 'User-Agent': 'any-dl' } });
 	} catch (err) {
 		throw new UserFacingError(`Could not reach the Kick CDN: ${err.message}`);
 	}

@@ -1,24 +1,27 @@
-# kick-vod
+# any-dl
 
-**Download VODs and clips from [kick.com](https://kick.com) in full quality, straight to MP4.**
+**Download videos in full quality, straight to MP4 — from a link or just a channel name.**
 
-[![npm](https://img.shields.io/npm/v/kick-vod)](https://www.npmjs.com/package/kick-vod)
-[![CI](https://github.com/SwierczKacper/kick-vod/actions/workflows/ci.yml/badge.svg)](https://github.com/SwierczKacper/kick-vod/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/any-dl)](https://www.npmjs.com/package/any-dl)
+[![CI](https://github.com/SwierczKacper/any-dl/actions/workflows/ci.yml/badge.svg)](https://github.com/SwierczKacper/any-dl/actions/workflows/ci.yml)
 [![Node.js 18+](https://img.shields.io/badge/node-%E2%89%A518-brightgreen)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ```bash
-npm install -g kick-vod
+npm install -g any-dl
 ```
 
 Paste a link, get the file. No re-encoding, no quality cap, **no required dependencies**.
+
+**Supported sites:** [kick.com](https://kick.com) — VODs and clips. More sites are
+planned; [ask for one](https://github.com/SwierczKacper/any-dl/issues/new/choose).
 
 A command-line Kick VOD downloader and clip downloader: it saves past broadcasts
 at up to 1080p60, cuts a slice out of a long stream, and works from a link or
 just a channel name.
 
 ```bash
-kick-vod https://kick.com/somechannel/videos/019fdd44-f600-7184-bf35-ff795a9b372c
+any-dl https://kick.com/somechannel/videos/019fdd44-f600-7184-bf35-ff795a9b372c
 ```
 
 ```
@@ -44,7 +47,7 @@ Pick one with a single keypress and it starts, showing what it is actually doing
 Or give it a channel name and choose from its recent streams:
 
 ```bash
-kick-vod xmerghani
+any-dl xmerghani
 ```
 
 ```
@@ -65,7 +68,7 @@ kick-vod xmerghani
 ## Missing something? Just ask
 
 **If this tool does not do something you need, [open an
-issue](https://github.com/SwierczKacper/kick-vod/issues/new/choose) and it will
+issue](https://github.com/SwierczKacper/any-dl/issues/new/choose) and it will
 probably get added.** No request is too small or too obvious — a flag you
 expected to exist, output you find hard to read, a step that annoys you every
 time. You do not need to know how it should work, or whether it is possible.
@@ -133,7 +136,7 @@ export CHROME_PATH=/usr/bin/chromium
 export FFMPEG_PATH=/usr/local/bin/ffmpeg
 ```
 
-A third variable, `KICK_VOD_DIR`, sets where downloads go — see
+A third variable, `ANY_DL_DIR`, sets where downloads go — see
 [Where files land](#where-files-land-and-what-theyre-called).
 
 No Chrome anywhere on the machine? Fetch a private copy (this does **not** add a
@@ -150,18 +153,18 @@ npx @puppeteer/browsers install chrome@stable
 ### From npm (recommended)
 
 ```bash
-npm install -g kick-vod
-kick-vod --help
+npm install -g any-dl
+any-dl --help
 ```
 
 That is everything — a working ffmpeg comes with it. Add `--omit=optional` to
 skip the bundled binary and use your own. To remove it later:
-`npm uninstall -g kick-vod`.
+`npm uninstall -g any-dl`.
 
 Or run it once without installing anything:
 
 ```bash
-npx kick-vod <url>
+npx any-dl <url>
 ```
 
 ### From source
@@ -169,13 +172,13 @@ npx kick-vod <url>
 For hacking on it, or if you would rather not install from a registry:
 
 ```bash
-git clone https://github.com/SwierczKacper/kick-vod.git
-cd kick-vod
+git clone https://github.com/SwierczKacper/any-dl.git
+cd any-dl
 npm install         # optional bundled ffmpeg
-npm link            # puts `kick-vod` on your PATH
+npm link            # puts `any-dl` on your PATH
 ```
 
-There is no build step, so `node bin/kick-vod.js --help` works straight from the
+There is no build step, so `node bin/any-dl.js --help` works straight from the
 clone as well.
 
 ---
@@ -183,7 +186,7 @@ clone as well.
 ## Usage
 
 ```
-kick-vod <url|channel|uuid> [options]
+any-dl <url|channel|uuid> [options]
 ```
 
 Run it with no arguments at all and it will ask for a link or channel name.
@@ -205,7 +208,7 @@ Run it with no arguments at all and it will ask for a link or channel name.
 | `-q, --quality <q>` | `best`, `worst`, or an exact variant: `1080p60`, `720p60`, `720`, … Omit it to pick from a list |
 | `--qualities` | list what this VOD offers, with estimated sizes, then exit |
 | `-o, --output <file>` | output filename (default: `<channel> - <date> - <title>.mp4`) |
-| `-d, --dir <dir>` | output directory (default: `$KICK_VOD_DIR`, otherwise the current directory) |
+| `-d, --dir <dir>` | output directory (default: `$ANY_DL_DIR`, otherwise the current directory) |
 | `--channel-dir` | save into a per-channel subdirectory of the output directory |
 | `--from <time>` | start at this position, e.g. `01:12:30` |
 | `--to <time>` | stop at this position |
@@ -225,25 +228,25 @@ Timecodes accept `90`, `1:30`, or `01:23:45`.
 
 ```bash
 # Best available quality, into ~/Videos
-kick-vod https://kick.com/xqc/videos/<id> -d ~/Videos
+any-dl https://kick.com/xqc/videos/<id> -d ~/Videos
 
 # Browse a channel's recent streams and pick one
-kick-vod xqc
+any-dl xqc
 
 # What qualities does this VOD have?
-kick-vod <url> --qualities
+any-dl <url> --qualities
 
 # A 15-minute highlight out of an 8-hour stream
-kick-vod <url> --from 01:00:00 --to 01:15:00 -o highlight.mp4
+any-dl <url> --from 01:00:00 --to 01:15:00 -o highlight.mp4
 
 # Smaller file, no questions asked
-kick-vod <url> -q 720p60 --yes
+any-dl <url> -q 720p60 --yes
 
 # List recent VODs with their links
-kick-vod xqc --list -n 10
+any-dl xqc --list -n 10
 
 # Grab the direct stream URL for your own tooling
-kick-vod <url> --json | jq -r .sourceUrl
+any-dl <url> --json | jq -r .sourceUrl
 ```
 
 ### Exit codes
@@ -295,10 +298,10 @@ terminal, which keeps scripts and CI working exactly as before.
 
 By default the file is written to the current directory, like any other CLI tool.
 To have one fixed destination no matter where you run the command from, set
-`KICK_VOD_DIR` once:
+`ANY_DL_DIR` once:
 
 ```bash
-echo 'export KICK_VOD_DIR="$HOME/Videos/kick"' >> ~/.bashrc
+echo 'export ANY_DL_DIR="$HOME/Videos/kick"' >> ~/.bashrc
 ```
 
 `--dir` always overrides it, and `--channel-dir` adds a per-channel subdirectory:
@@ -330,7 +333,7 @@ Three things make this usable as a backend rather than only at a prompt.
 **A channel listing as JSON**, for polling a channel for new streams:
 
 ```bash
-kick-vod somechannel --list --json -n 5
+any-dl somechannel --list --json -n 5
 ```
 
 Each entry carries `uuid`, `title`, `channel`, `startTime`, `durationSec`,
@@ -339,13 +342,13 @@ Each entry carries `uuid`, `title`, `channel`, `startTime`, `durationSec`,
 **Metadata and the direct stream URL** for one VOD, without downloading:
 
 ```bash
-kick-vod <url> --json
+any-dl <url> --json
 ```
 
 **Progress as NDJSON on stdout**, one object per line, roughly twice a second:
 
 ```bash
-kick-vod <url> -q 720p60 --yes --progress json
+any-dl <url> -q 720p60 --yes --progress json
 ```
 
 ```json
@@ -408,7 +411,7 @@ terminal, where the reader is a log rather than a person:
 ### Project layout
 
 ```
-bin/kick-vod.js    entry point and top-level error handling
+bin/any-dl.js      entry point and top-level error handling
 src/browser.js     Chrome detection + reading the Cloudflare-protected API
 src/kick.js        Kick endpoints, link parsing, UUIDv7 fallback
 src/hls.js         master playlist parsing and quality selection
@@ -535,7 +538,7 @@ an issue.
 ## Contributing
 
 Issues and pull requests are welcome — especially fixes for Kick API changes.
-There is no build step: clone it, edit it, run `node bin/kick-vod.js` to try it.
+There is no build step: clone it, edit it, run `node bin/any-dl.js` to try it.
 Please add no required dependencies — the only one is `ffmpeg-static`, and it is
 optional precisely so the tool still works when it is absent.
 

@@ -100,7 +100,7 @@ function expandHome(path) {
 /**
  * Work out where a download should land.
  *
- * An explicit --dir wins, then the KICK_VOD_DIR environment variable, then the
+ * An explicit --dir wins, then the ANY_DL_DIR environment variable, then the
  * current directory — which keeps the default behaving like any other CLI tool.
  */
 export function resolveOutputDir({ dir, envDir, channel, perChannel = false, cwd = process.cwd() }) {

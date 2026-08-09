@@ -32,7 +32,7 @@ body:
     id: version
     attributes:
       label: Version
-      description: Output of `kick-vod --version`, if you have it installed.
+      description: Output of `any-dl --version`, if you have it installed.
       placeholder: '1.7.1'
     validations:
       required: false

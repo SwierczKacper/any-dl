@@ -1,20 +1,20 @@
 {
-  "name": "kick-vod",
-  "version": "1.9.0",
-  "description": "Download Kick.com VODs and clips to MP4 in full quality (up to 1080p60). Fast CLI, no required dependencies, handles Kick's new UUIDv7 links.",
+  "name": "any-dl",
+  "version": "2.0.0",
+  "description": "Download videos to MP4 in full quality (up to 1080p60) from the command line. Currently supports Kick.com VODs and clips, including its new UUIDv7 links. Fast, with no required dependencies.",
   "type": "module",
   "license": "MIT",
   "author": "Świercz Kacper (https://swierczkacper.pl)",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/SwierczKacper/kick-vod.git"
+    "url": "git+https://github.com/SwierczKacper/any-dl.git"
   },
   "bugs": {
-    "url": "https://github.com/SwierczKacper/kick-vod/issues"
+    "url": "https://github.com/SwierczKacper/any-dl/issues"
   },
-  "homepage": "https://github.com/SwierczKacper/kick-vod#readme",
+  "homepage": "https://github.com/SwierczKacper/any-dl#readme",
   "bin": {
-    "kick-vod": "bin/kick-vod.js"
+    "any-dl": "bin/any-dl.js"
   },
   "files": [
     "bin",
@@ -27,6 +27,7 @@
     "kick",
     "kick.com",
     "kick-vod",
+    "any-dl",
     "vod",
     "vod-downloader",
     "downloader",
@@ -43,7 +44,7 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "start": "node bin/kick-vod.js",
+    "start": "node bin/any-dl.js",
     "test": "node --test",
     "smoke": "node scripts/live-smoke.mjs"
   },

@@ -67,7 +67,7 @@ async function main() {
 
 	// Lowest quality on purpose: this is a liveness check, not a download.
 	const variant = selectVariant(variants, 'worst');
-	const dir = mkdtempSync(join(tmpdir(), 'kick-vod-smoke-'));
+	const dir = mkdtempSync(join(tmpdir(), 'any-dl-smoke-'));
 	const output = join(dir, 'smoke.mp4');
 
 	try {

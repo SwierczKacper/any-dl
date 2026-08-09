@@ -44,12 +44,12 @@ test('sanitizeFilename avoids names reserved on Windows', () => {
 });
 
 test('uniquePath returns the plain path when nothing is in the way', () => {
-	const dir = mkdtempSync(join(tmpdir(), 'kick-vod-test-'));
+	const dir = mkdtempSync(join(tmpdir(), 'any-dl-test-'));
 	assert.equal(uniquePath(dir, 'video.mp4'), join(dir, 'video.mp4'));
 });
 
 test('uniquePath never overwrites an existing file', () => {
-	const dir = mkdtempSync(join(tmpdir(), 'kick-vod-test-'));
+	const dir = mkdtempSync(join(tmpdir(), 'any-dl-test-'));
 	writeFileSync(join(dir, 'video.mp4'), '');
 	assert.equal(uniquePath(dir, 'video.mp4'), join(dir, 'video (2).mp4'));
 
@@ -153,7 +153,7 @@ test('resolveOutputDir prefers --dir over the environment', () => {
 	assert.equal(dir, '/explicit');
 });
 
-test('resolveOutputDir uses KICK_VOD_DIR when no --dir is given', () => {
+test('resolveOutputDir uses ANY_DL_DIR when no --dir is given', () => {
 	assert.equal(resolveOutputDir({ envDir: '/from-env', cwd: '/home/u' }), '/from-env');
 });
 

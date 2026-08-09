@@ -335,7 +335,7 @@ export async function run(argv) {
 
 	const outputDir = resolveOutputDir({
 		dir: options.dir,
-		envDir: process.env.KICK_VOD_DIR,
+		envDir: process.env.ANY_DL_DIR,
 		channel: media.channel,
 		perChannel: options.channelDir,
 	});

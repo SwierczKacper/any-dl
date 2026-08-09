@@ -33,7 +33,7 @@ body:
     id: version
     attributes:
       label: Version
-      description: Output of `kick-vod --version`.
+      description: Output of `any-dl --version`.
       placeholder: '1.7.1'
     validations:
       required: true
