@@ -13,6 +13,10 @@ That includes:
 - something that works but takes too many steps
 - "does it do X?" — if the answer is no, that is a feature request
 
+The [roadmap](ROADMAP.md) lists what is already planned, including which sites
+are next. If what you want is on it, saying so still helps — it is how the
+order gets decided.
+
 ## Reporting a break
 
 Kick has no public API, so this tool depends on endpoints that change without
@@ -29,8 +33,20 @@ git clone https://github.com/SwierczKacper/any-dl.git
 cd any-dl
 npm install          # optional bundled ffmpeg
 node bin/any-dl.js --help
-npm test             # 114 tests, all offline
+npm test             # 133 tests, all offline
 ```
+
+### Adding a site
+
+Sites live one per module in `src/providers/`. A new one means writing that
+module and adding it to the registry in `src/providers/index.js` — nothing in
+`cli.js` should need to change.
+
+The module exports `key`, `label`, `matchUrl`, `webUrl`, `parseTarget`,
+`getVideo`, `getClip`, `getChannelVods` and `getChannelClips`. Whatever object
+it returns internally is its own business; the machine-readable output is built
+field by field in `src/contract.js`, so a provider fills that shape in and never
+changes it.
 
 A few conventions worth knowing before opening a pull request:
 
