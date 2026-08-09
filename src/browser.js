@@ -2,13 +2,13 @@ import { spawn } from 'node:child_process';
 import { existsSync, readdirSync } from 'node:fs';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { USER_AGENT } from './http.js';
 import { UserFacingError } from './util.js';
 
 // Kick sits behind Cloudflare, which rejects plain HTTP clients (and any UA
 // containing "HeadlessChrome"). Driving a real Chrome with --dump-dom gets us
-// the JSON without a single npm dependency.
-const USER_AGENT =
-	'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
+// the JSON without a single npm dependency. Sites that answer an ordinary
+// request go through http.js instead.
 
 // Persisted so Cloudflare's clearance cookie survives between invocations.
 const PROFILE_DIR = join(tmpdir(), 'any-dl-chrome-profile');
