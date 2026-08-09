@@ -27,11 +27,8 @@ Want one that is not listed? Ask — the order is not fixed.
 
 ## Features
 
-- **Picking a site interactively.** With one provider, a bare channel name is
-  unambiguous. With two it is not, since nothing in a name says which site it
-  belongs to. Running the command with no arguments should walk you through it.
-- **`--provider`** to name the site outright, for scripts and for channel names
-  that collide with a site name.
+- **Switching between VODs and clips inside the picker**, with a keypress,
+  rather than rerunning the command with `--clips`.
 - **Cutting a clip out of a VOD** more directly than `--from` / `--to` — for
   example giving a length instead of an end timestamp.
 - **Resuming an interrupted download** instead of starting the file again.

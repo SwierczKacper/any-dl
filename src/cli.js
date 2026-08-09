@@ -8,7 +8,7 @@ import { listingToJson, mediaToJson } from './contract.js';
 import { download } from './ffmpeg.js';
 import { describeVariant, estimateBytes, getVariants, selectVariant } from './hls.js';
 import { confirm, input, isInteractive, select } from './prompt.js';
-import { providerFor } from './providers/index.js';
+import { resolveProvider } from './providers/index.js';
 import {
 	c,
 	formatBytes,
@@ -144,6 +144,17 @@ async function resolveMedia(target, provider, options) {
 
 	const chosen = await select({ message: `Select a ${options.clips ? 'clip' : 'VOD'}`, choices: toChoices(items) });
 	return chosen;
+}
+
+/**
+ * Ask which site a bare channel name belongs to. Only ever reached when more
+ * than one site is supported and nothing else has settled the question.
+ */
+function chooseSite(providers) {
+	return select({
+		message: 'Which site?',
+		choices: providers.map((provider) => ({ name: provider.label, value: provider })),
+	});
 }
 
 /** Validated up front, before any network work, so typos fail instantly. */
@@ -287,11 +298,20 @@ export async function run(argv) {
 			process.stdout.write(`${HELP_TEXT}\n`);
 			return 1;
 		}
-		targetInput = await input({ message: 'Video link or channel name' });
+		// One prompt, taking either form. A pasted link settles which site this
+		// is, so asking that first would be a question most people never need.
+		targetInput = await input({ message: 'Paste a link, or type a channel name' });
 		if (!targetInput) return 130;
 	}
 
-	const provider = providerFor(targetInput);
+	const provider = await resolveProvider({
+		target: targetInput,
+		provider: options.provider,
+		env: process.env.ANY_DL_PROVIDER,
+		chooseSite: isInteractive() ? chooseSite : null,
+	});
+	if (provider === null) return 130; // the site picker was cancelled
+
 	const target = provider.parseTarget(targetInput);
 	const { from, to } = parseTimeRange(options);
 

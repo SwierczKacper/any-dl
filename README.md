@@ -139,8 +139,9 @@ export CHROME_PATH=/usr/bin/chromium
 export FFMPEG_PATH=/usr/local/bin/ffmpeg
 ```
 
-A third variable, `ANY_DL_DIR`, sets where downloads go — see
-[Where files land](#where-files-land-and-what-theyre-called).
+Two more exist: `ANY_DL_DIR` sets where downloads go — see
+[Where files land](#where-files-land-and-what-theyre-called) — and
+`ANY_DL_PROVIDER` sets the site to assume for bare channel names.
 
 No Chrome anywhere on the machine? Fetch a private copy (this does **not** add a
 dependency to the project — it just puts a browser on disk):
@@ -204,6 +205,21 @@ Run it with no arguments at all and it will ask for a link or channel name.
 | `<channel>` | shows an arrow-key picker over that channel's recent VODs |
 | `<id>` | a VOD by id (old-style ids only — see [FAQ](#faq)) |
 
+### Which site it uses
+
+A link says which site it belongs to, so nothing needs deciding. A bare channel
+name does not — `somechannel` looks the same everywhere — so it is resolved in
+this order:
+
+1. a site named before the target: `any-dl kick somechannel`
+2. `--provider kick`
+3. the `ANY_DL_PROVIDER` environment variable
+4. the only supported site, while there is only one
+
+Once a second site exists, a name that could belong to either will bring up a
+picker. Without a terminal — in a script, or under `--yes` — it fails and asks
+you to be explicit instead of guessing.
+
 ### Options
 
 | Option | Description |
@@ -213,6 +229,7 @@ Run it with no arguments at all and it will ask for a link or channel name.
 | `-o, --output <file>` | output filename (default: `<channel> - <date> - <title>.mp4`) |
 | `-d, --dir <dir>` | output directory (default: `$ANY_DL_DIR`, otherwise the current directory) |
 | `--channel-dir` | save into a per-channel subdirectory of the output directory |
+| `--provider <site>` | which site to use, when a link does not already say |
 | `--from <time>` | start at this position, e.g. `01:12:30` |
 | `--to <time>` | stop at this position |
 | `--clips` | work on the channel's clips instead of its VODs |
