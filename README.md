@@ -76,6 +76,9 @@ time. You do not need to know how it should work, or whether it is possible.
 Most of what is here came from exactly that: someone said the filenames were
 ugly, or asked what a number on the progress bar meant, and it changed.
 
+What is already planned — more sites among other things — is listed in the
+[roadmap](ROADMAP.md). Asking for something is the quickest way to move it up.
+
 If it stops working entirely, that is worth reporting too — Kick has no public
 API, and it has broken once already.
 
