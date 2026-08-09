@@ -56,6 +56,7 @@ Options
       --from <time>     start at this position, e.g. 00:12:30
       --to <time>       stop at this position, e.g. 01:45:00
       --clips           operate on the channel's clips instead of its VODs
+                        (or press c in the picker to swap between the two)
   -l, --list            list the channel's VODs/clips and exit
   -n, --limit <n>       how many entries to list (default: 20)
       --faststart       move the MP4 index to the front (extra pass, slow on big files)

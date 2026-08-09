@@ -27,8 +27,6 @@ Want one that is not listed? Ask — the order is not fixed.
 
 ## Features
 
-- **Switching between VODs and clips inside the picker**, with a keypress,
-  rather than rerunning the command with `--clips`.
 - **Cutting a clip out of a VOD** more directly than `--from` / `--to` — for
   example giving a length instead of an end timestamp.
 - **Resuming an interrupted download** instead of starting the file again.

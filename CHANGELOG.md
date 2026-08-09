@@ -1,5 +1,17 @@
 # Changelog
 
+## 3.2.0
+
+- Press `c` in the channel picker to swap between a channel's VODs and its
+  clips, instead of quitting and rerunning the command with `--clips`. The
+  other list is fetched at that point, so nothing is downloaded up front.
+- Switching to a list that turns out to be empty says so and switches back,
+  rather than ending the run — the list you came from is known to have had
+  something in it.
+- The picker now takes optional single-key actions in general. It knows nothing
+  about what they mean; the caller supplies the key, the hint shown in the
+  header and the value it resolves with.
+
 ## 3.1.0
 
 - Choosing a site is now possible without a link. Name it before the target —

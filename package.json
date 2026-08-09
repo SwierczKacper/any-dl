@@ -1,6 +1,6 @@
 {
   "name": "any-dl",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "description": "Download videos to MP4 in full quality (up to 1080p60) from the command line. Currently supports Kick.com VODs and clips, including its new UUIDv7 links. Fast, with no required dependencies.",
   "type": "module",
   "license": "MIT",

@@ -103,47 +103,69 @@ function toChoices(items) {
 	}));
 }
 
+/** Returned by the picker when the user asked for the other list instead. */
+const SWITCH_KIND = Symbol('switch kind');
+
 /** Resolve the CLI target into a single VOD/clip, prompting when needed. */
 async function resolveMedia(target, provider, options) {
 	if (target.type === 'video') return provider.getVideo(target.id, { channel: target.channel });
 	if (target.type === 'clip') return provider.getClip(target.id);
 
-	const label = options.clips ? 'clips' : 'VODs';
-	info(`Fetching ${label} for ${c.bold(target.channel)}…`);
+	// The picker can swap between a channel's VODs and its clips, which means
+	// fetching the other list rather than making the user rerun the command.
+	let clips = options.clips;
 
-	const items = options.clips
-		? await provider.getChannelClips(target.channel, { limit: options.limit })
-		: await provider.getChannelVods(target.channel, { limit: options.limit });
+	for (;;) {
+		const label = clips ? 'clips' : 'VODs';
+		info(`Fetching ${label} for ${c.bold(target.channel)}…`);
 
-	if (items.length === 0) {
-		throw new UserFacingError(`No ${label} found for channel "${target.channel}".`);
-	}
+		const items = clips
+			? await provider.getChannelClips(target.channel, { limit: options.limit })
+			: await provider.getChannelVods(target.channel, { limit: options.limit });
 
-	if (options.list) {
-		if (options.json) {
-			// Same shape as a single --json result, minus the stream URL, which
-			// would mean fetching every playlist just to list them.
-			process.stdout.write(`${JSON.stringify(listingToJson(items, provider), null, 2)}\n`);
+		if (items.length === 0) {
+			// Only a fresh run has nothing to fall back to. Having switched, the
+			// list we came from is known to have had something in it.
+			if (clips === options.clips) {
+				throw new UserFacingError(`No ${label} found for channel "${target.channel}".`);
+			}
+			warn(`This channel has no ${label}.`);
+			clips = !clips;
+			continue;
+		}
+
+		if (options.list) {
+			if (options.json) {
+				// Same shape as a single --json result, minus the stream URL, which
+				// would mean fetching every playlist just to list them.
+				process.stdout.write(`${JSON.stringify(listingToJson(items, provider), null, 2)}\n`);
+				return null;
+			}
+
+			for (const [index, item] of items.entries()) {
+				process.stdout.write(
+					`${String(index + 1).padStart(2)}. ${item.title}\n    ${describeMedia(item)}\n    ${provider.webUrl(item)}\n`
+				);
+			}
 			return null;
 		}
 
-		for (const [index, item] of items.entries()) {
-			process.stdout.write(
-				`${String(index + 1).padStart(2)}. ${item.title}\n    ${describeMedia(item)}\n    ${provider.webUrl(item)}\n`
+		if (!isInteractive()) {
+			throw new UserFacingError(
+				'A channel name needs an interactive terminal to pick from.',
+				'Pass a direct VOD link instead, or use --list to see what is available.'
 			);
 		}
-		return null;
-	}
 
-	if (!isInteractive()) {
-		throw new UserFacingError(
-			'A channel name needs an interactive terminal to pick from.',
-			'Pass a direct VOD link instead, or use --list to see what is available.'
-		);
-	}
+		const chosen = await select({
+			message: `Select a ${clips ? 'clip' : 'VOD'}`,
+			choices: toChoices(items),
+			actions: [{ key: 'c', hint: clips ? 'c VODs' : 'c clips', value: SWITCH_KIND }],
+		});
 
-	const chosen = await select({ message: `Select a ${options.clips ? 'clip' : 'VOD'}`, choices: toChoices(items) });
-	return chosen;
+		if (chosen !== SWITCH_KIND) return chosen;
+		clips = !clips;
+	}
 }
 
 /**
