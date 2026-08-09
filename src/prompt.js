@@ -25,9 +25,15 @@ export function fit(text, reserved = 4) {
 
 /**
  * Arrow-key list picker rendered on stderr.
+ *
  * Resolves with the chosen choice's `value`, or null if the user cancels.
+ *
+ * `actions` adds single-key shortcuts alongside the list — each is
+ * `{ key, hint, value }`, and pressing it resolves with that `value` instead of
+ * a choice. The picker itself stays ignorant of what they mean; the caller
+ * compares the result against whatever sentinel it passed in.
  */
-export function select({ message, choices, pageSize = 8 }) {
+export function select({ message, choices, pageSize = 8, actions = [] }) {
 	if (choices.length === 0) return Promise.resolve(null);
 	if (!isInteractive()) {
 		return Promise.reject(new Error('An interactive terminal is required to choose from a list.'));
@@ -67,9 +73,8 @@ export function select({ message, choices, pageSize = 8 }) {
 			if (index < offset) offset = index;
 			if (index >= offset + pageSize) offset = index - pageSize + 1;
 
-			const lines = [
-				`${c.cyan('?')} ${c.bold(message)} ${c.gray('— ↑/↓ move, Enter select, q quit')}`,
-			];
+			const hints = ['↑/↓ move', 'Enter select', ...actions.map((action) => action.hint), 'q quit'];
+			const lines = [`${c.cyan('?')} ${c.bold(message)} ${c.gray(`— ${hints.join(', ')}`)}`];
 
 			choices.slice(offset, offset + pageSize).forEach((choice, i) => {
 				const active = offset + i === index;
@@ -95,6 +100,13 @@ export function select({ message, choices, pageSize = 8 }) {
 			}
 			if (key.name === 'return' || key.name === 'enter') {
 				finish(choices[index].value);
+				return;
+			}
+
+			// Checked before navigation, so a shortcut cannot collide with j/k.
+			const action = actions.find((candidate) => candidate.key === key.name);
+			if (action) {
+				finish(action.value);
 				return;
 			}
 

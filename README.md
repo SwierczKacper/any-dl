@@ -52,14 +52,15 @@ any-dl xmerghani
 
 ```
 › Fetching VODs for xmerghani…
-? Select a VOD — ↑/↓ move, Enter select, q quit
-❯ LAST DANCE GTA RP - STREFA.RP [DAY 1]| !sklep !skins !holy !swap !steel  (08:07:45)
-    2026-08-07 19:28 · 08:07:45 · Just Chatting · 87,544 views
+? Select a VOD — ↑/↓ move, Enter select, c clips, q quit
+❯ REKRUTACJA NOWYCH KELENEREK - STREFA.RP [DAY 2] | !sklep !skins !holy !swap !steel  (05:01:01)
+    2026-08-08 19:30 · 05:01:01 · Just Chatting · 68,603 views
+  LAST DANCE GTA RP - STREFA.RP [DAY 1]| !sklep !skins !holy !swap !steel  (08:07:45)
   MECCHA CAMELEON NA DELEGACJI | !sklep !skins !holy !swap !steel  (01:59:29)
   WIELKI UPDATE DO GOLFA - BITWA STREAMERÓW | !sklep !skins !holy !swap !steel  (01:45:05)
-  TIK-TOKI, GIVEAWAYE I ZAWIJKA | !sklep !skins !holy !swap !steel  (01:34:45)
-  nowy rematch działa | !sklep !skins !holy !swap !steel  (02:37:03)
 ```
+
+Press `c` in that list to swap between the channel's VODs and its clips.
 
 > **Not affiliated with Kick.** Please read [Legal & disclaimer](#️-legal--disclaimer) before use.
 

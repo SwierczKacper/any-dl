@@ -67,6 +67,32 @@ test('input returns null when nothing is typed', { skip: SKIP, timeout: 30_000 }
 	assert.match(await runPrompt('input', '\n'), /RESULT=null/);
 });
 
+test('select returns the highlighted choice on Enter', { skip: SKIP, timeout: 30_000 }, async () => {
+	assert.match(await runPrompt('select', '\r'), /RESULT="one"/);
+});
+
+test('select moves with the arrow keys', { skip: SKIP, timeout: 30_000 }, async () => {
+	assert.match(await runPrompt('select', '\x1b[B\r'), /RESULT="two"/);
+	assert.match(await runPrompt('select', '\x1b[B\x1b[B\r'), /RESULT="three"/);
+});
+
+test('select returns null when quit', { skip: SKIP, timeout: 30_000 }, async () => {
+	assert.match(await runPrompt('select', 'q'), /RESULT=null/);
+});
+
+test('an action key resolves with its own value, not a choice', { skip: SKIP, timeout: 30_000 }, async () => {
+	assert.match(await runPrompt('select-actions', 'c'), /RESULT="SWITCHED"/);
+});
+
+test('an action key does not shadow ordinary navigation', { skip: SKIP, timeout: 30_000 }, async () => {
+	// j/k still move; only the registered key is special.
+	assert.match(await runPrompt('select-actions', 'j\r'), /RESULT="two"/);
+});
+
+test('the action is advertised in the hint line', { skip: SKIP, timeout: 30_000 }, async () => {
+	assert.match(await runPrompt('select-actions', 'q'), /c other list/);
+});
+
 test('fit keeps runs of spaces, because callers align columns with them', () => {
 	assert.equal(fit('1080p60  1920x1080  8.66 Mbps'), '1080p60  1920x1080  8.66 Mbps');
 });
