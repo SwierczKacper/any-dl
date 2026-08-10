@@ -87,10 +87,19 @@ export function selectVariant(variants, quality = 'best') {
 	);
 }
 
+/**
+ * "1080p60 (1920x1080, 8.66 Mbps)" — dropping whichever parts are unknown.
+ *
+ * A clip's sizes arrive as a bare height with no width and no bitrate, and
+ * "1080p (unknown, unknown bitrate)" says less than "1080p" does.
+ */
 export function describeVariant(variant) {
-	const resolution = variant.width && variant.height ? `${variant.width}x${variant.height}` : 'unknown';
-	const mbps = variant.bandwidth ? `${(variant.bandwidth / 1_000_000).toFixed(2)} Mbps` : 'unknown bitrate';
-	return `${variant.name} (${resolution}, ${mbps})`;
+	const detail = [
+		variant.width && variant.height ? `${variant.width}x${variant.height}` : null,
+		variant.bandwidth ? `${(variant.bandwidth / 1_000_000).toFixed(2)} Mbps` : null,
+	].filter(Boolean);
+
+	return detail.length > 0 ? `${variant.name} (${detail.join(', ')})` : variant.name;
 }
 
 /**

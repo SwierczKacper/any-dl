@@ -45,11 +45,6 @@ Want one that is not listed? Ask — the order is not fixed.
   So an honest version of this filters on top of what each site returns, tells
   you when a limit is the site's rather than the tool's, and does not pretend
   "all clips" means the same thing everywhere.
-- **Choosing a clip's quality.** Clips are treated as having exactly one, which
-  was true of the first site supported and is not true of Twitch — its clips
-  come in several and the largest is taken without asking. Until that changes,
-  `availableQualities` is empty for every clip, which understates what is
-  actually on offer.
 - **Reaching content that needs an account**, such as a subscriber-only VOD.
   Currently no site is given credentials at all, which is the reason nothing
   gated is downloadable; whether that should change is a decision, not an

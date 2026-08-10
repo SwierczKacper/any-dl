@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { matchUrl, parseTarget, webUrl } from '../src/providers/twitch.js';
+import { clipVariants, matchUrl, parseTarget, webUrl } from '../src/providers/twitch.js';
 
 test('parseTarget reads a VOD link', () => {
 	assert.deepEqual(parseTarget('https://www.twitch.tv/videos/2832871456'), {
@@ -120,4 +120,57 @@ test('webUrl builds the page a viewer would open', () => {
 		webUrl({ kind: 'clip', id: 'SomeSlug-aBcD', channel: 'somechannel' }),
 		'https://www.twitch.tv/somechannel/clip/SomeSlug-aBcD'
 	);
+});
+
+const CLIP_WITH_QUALITIES = {
+	playbackAccessToken: { value: 'TOKEN', signature: 'SIG' },
+	videoQualities: [
+		{ quality: '480', frameRate: 30, sourceURL: 'https://cdn.example.net/clip/480/index.mp4' },
+		{ quality: '1080', frameRate: 59.866, sourceURL: 'https://cdn.example.net/clip/1080/index.mp4' },
+		{ quality: '720', frameRate: 0, sourceURL: 'https://cdn.example.net/clip/720/index.mp4' },
+	],
+};
+
+test('clipVariants orders a clip tallest first', () => {
+	const variants = clipVariants(CLIP_WITH_QUALITIES);
+	assert.deepEqual(
+		variants.map((variant) => variant.height),
+		[1080, 720, 480]
+	);
+});
+
+test('clipVariants names a size the way --quality is written', () => {
+	const [best, middle, worst] = clipVariants(CLIP_WITH_QUALITIES);
+	// 59.866 is what Twitch really reports; nobody types "1080p59.866".
+	assert.equal(best.name, '1080p60');
+	// A frame rate of 0 means "not stated", not zero frames a second.
+	assert.equal(middle.name, '720p');
+	assert.equal(worst.name, '480p30');
+});
+
+test('clipVariants signs every URL', () => {
+	for (const variant of clipVariants(CLIP_WITH_QUALITIES)) {
+		const url = new URL(variant.url);
+		assert.equal(url.searchParams.get('sig'), 'SIG');
+		assert.equal(url.searchParams.get('token'), 'TOKEN');
+	}
+});
+
+test('clipVariants leaves width and bitrate unknown rather than inventing them', () => {
+	// Twitch states neither, and a guessed bitrate would drive a size estimate
+	// and a disk-space warning that were never measured.
+	const [best] = clipVariants(CLIP_WITH_QUALITIES);
+	assert.equal(best.width, null);
+	assert.equal(best.bandwidth, 0);
+});
+
+test('clipVariants skips an entry with nothing to download', () => {
+	const variants = clipVariants({
+		videoQualities: [{ quality: '1080', sourceURL: null }, ...CLIP_WITH_QUALITIES.videoQualities],
+	});
+	assert.equal(variants.length, 3);
+});
+
+test('clipVariants copes with a clip that has no qualities at all', () => {
+	assert.deepEqual(clipVariants({}), []);
 });

@@ -153,3 +153,20 @@ test('estimateBytes gives up when there is nothing to go on', () => {
 	assert.equal(estimateBytes({ bandwidth: 8_000_000 }, NaN), null);
 	assert.equal(estimateBytes(null, 60), null);
 });
+
+test('describeVariant leaves out what it does not know', () => {
+	// A clip's size arrives as a bare height. "1080p (unknown, unknown bitrate)"
+	// says less than "1080p" does.
+	assert.equal(describeVariant({ name: '1080p', width: null, height: 1080, bandwidth: 0 }), '1080p');
+});
+
+test('describeVariant keeps whichever half it does know', () => {
+	assert.equal(
+		describeVariant({ name: '1080p', width: 1920, height: 1080, bandwidth: 0 }),
+		'1080p (1920x1080)'
+	);
+	assert.equal(
+		describeVariant({ name: '1080p', width: null, height: 1080, bandwidth: 8_000_000 }),
+		'1080p (8.00 Mbps)'
+	);
+});

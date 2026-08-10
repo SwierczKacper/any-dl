@@ -95,3 +95,39 @@ test('qualityChoices drops the recommendation marker when that variant will not 
 	const choices = qualityChoices(VARIANTS, 3600, 1024 ** 3);
 	assert.ok(!choices[0].name.includes('(recommended)'));
 });
+
+// A clip's sizes as a provider hands them over: a height, sometimes a frame
+// rate, and nothing else. No width, no bitrate, so no size estimate either.
+const CLIP_VARIANTS = [
+	{ name: '1080p', width: null, height: 1080, frameRate: null, bandwidth: 0, url: 'https://cdn.test/1080.mp4' },
+	{ name: '720p', width: null, height: 720, frameRate: null, bandwidth: 0, url: 'https://cdn.test/720.mp4' },
+];
+
+test('qualityChoices drops the columns nothing can fill', () => {
+	const [best] = qualityChoices(CLIP_VARIANTS, 30);
+	// "unknown  <blank>  <blank>" is three columns of noise beside the one
+	// piece of information there is.
+	assert.ok(!best.name.includes('unknown'), best.name);
+	assert.ok(!best.name.includes('Mbps'), best.name);
+	assert.equal(best.name, '1080p   (recommended)');
+});
+
+test('qualityChoices leaves no padding hanging off the end of a line', () => {
+	const choices = qualityChoices(CLIP_VARIANTS, 30);
+	assert.equal(choices[1].name, '720p');
+});
+
+test('qualityChoices keeps every column when the data is there', () => {
+	// The VOD case must not lose anything to the rule above.
+	const [best] = qualityChoices(VARIANTS, 3600);
+	assert.match(best.name, /1920x1080/);
+	assert.match(best.name, /Mbps/);
+	assert.match(best.name, /~/);
+});
+
+test('qualityChoices cannot warn about disk space it cannot estimate', () => {
+	// No bitrate means no size, and a warning would be invented rather than
+	// measured — the picker stays quiet instead.
+	const choices = qualityChoices(CLIP_VARIANTS, 30, 1);
+	assert.ok(!choices.some((choice) => choice.name.includes('not enough space')));
+});

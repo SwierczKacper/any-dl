@@ -65,25 +65,32 @@ export function qualityChoices(variants, seconds, freeBytes = null) {
 		...variants.map((variant) => (variant.width && variant.height ? `${variant.width}x${variant.height}`.length : 7))
 	);
 
+	// A clip's sizes come as a bare height: no width, no bitrate, so no estimate
+	// either. Columns nobody can fill are left out entirely rather than printed
+	// as a row of "unknown", which is three columns of noise beside the one
+	// piece of information there is.
+	const hasResolution = variants.some((variant) => variant.width && variant.height);
+	const hasBitrate = variants.some((variant) => variant.bandwidth);
+
 	return variants.map((variant, index) => {
 		const resolution = variant.width && variant.height ? `${variant.width}x${variant.height}` : 'unknown';
 		const mbps = variant.bandwidth ? `${(variant.bandwidth / 1_000_000).toFixed(2)} Mbps` : '';
 		const bytes = estimateBytes(variant, seconds);
 		const size = bytes ? `~${formatBytes(bytes)}` : '';
 
-		const columns = [
-			variant.name.padEnd(nameWidth),
-			resolution.padEnd(resolutionWidth),
-			mbps.padStart(9),
-			size.padStart(10),
-		];
+		const columns = [variant.name.padEnd(nameWidth)];
+		if (hasResolution) columns.push(resolution.padEnd(resolutionWidth));
+		if (hasBitrate) columns.push(mbps.padStart(9), size.padStart(10));
 
 		// Flagging this in the list is the whole point — better than finding out
 		// when the disk fills up an hour into a download.
 		if (bytes != null && freeBytes != null && bytes > freeBytes) columns.push(' — not enough space');
 		else if (index === 0) columns.push(' (recommended)');
 
-		return { name: columns.join('  '), value: variant };
+		// trimEnd only: runs of spaces *between* columns are how the list stays
+		// aligned, but padding hanging off the end of a line is just invisible
+		// litter — and with one column it is the whole of the padding.
+		return { name: columns.join('  ').trimEnd(), value: variant };
 	});
 }
 
@@ -351,14 +358,16 @@ export async function run(argv) {
 	const media = provider.resolvePlayable ? await provider.resolvePlayable(chosen) : chosen;
 
 	// Clips are plain MP4s; VODs go through an HLS master playlist.
-	const variants = media.masterUrl ? await getVariants(media.masterUrl) : [];
+	// A VOD's qualities come from its playlist. A clip's, where the site offers
+	// more than one, are handed over by the provider — there is no playlist to
+	// read, but from here on they are the same thing and take the same path.
+	const variants = media.masterUrl ? await getVariants(media.masterUrl) : (media.variants ?? []);
 
 	if (options.qualities) {
 		if (variants.length === 0) {
-			// Not necessarily the only one that exists: some sites offer a clip in
-			// several sizes and the best is taken without asking. Saying so would
-			// be a promise this does not yet keep.
-			process.stdout.write('This is a clip — its quality is not selectable here.\n');
+			// A clip on a site that serves exactly one file. Others hand over a
+			// list, and those take the branch below like any VOD.
+			process.stdout.write('This clip is served in one size only.\n');
 		} else {
 			const seconds = (parseTimecode(options.to) ?? media.durationSec ?? 0) - (parseTimecode(options.from) ?? 0);
 			for (const choice of qualityChoices(variants, seconds)) process.stdout.write(`${choice.name}\n`);
@@ -420,9 +429,13 @@ export async function run(argv) {
 	let pickedFromList = false;
 
 	if (variants.length === 0) {
-		// A clip: one quality, nothing to choose.
+		// A clip served as a single file: nothing to choose.
 	} else if (options.quality != null) {
 		variant = selectVariant(variants, options.quality);
+	} else if (variants.length === 1) {
+		// Also nothing to choose, but worth saying which one it is — so it goes
+		// through the same path rather than being treated as an unknown.
+		[variant] = variants;
 	} else if (options.yes || !isInteractive()) {
 		variant = selectVariant(variants, 'best');
 	} else {
