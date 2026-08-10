@@ -8,11 +8,24 @@ name: Live smoke test
 # available quality per site — a few hundred KB — and deletes it immediately. It
 # is NOT attached to pull requests: these are third-party sites, and their
 # downtime must not block development here.
+#
+# A failure opens an issue. Nobody watches a weekly job, and this one sat broken
+# through three releases without anyone noticing, so a red tick that has to be
+# looked for is not a warning at all.
 on:
   workflow_dispatch:
+    inputs:
+      simulate_failure:
+        description: 'Fail on purpose, to check that the alarm still works'
+        type: boolean
+        default: false
   schedule:
     # Mondays, 06:00 UTC.
     - cron: '0 6 * * 1'
+
+permissions:
+  contents: read
+  issues: write # only to report a failure; see the last steps
 
 jobs:
   live:
@@ -36,5 +49,67 @@ jobs:
       - name: Show the browser in use
         run: google-chrome --version
 
+      # An alarm nobody has ever heard is indistinguishable from one that does
+      # not work — which is the mistake this reporting exists to correct. This
+      # input makes it provable on demand.
+      - name: Fail on purpose
+        if: inputs.simulate_failure
+        run: |
+          echo "::error::Simulated failure — checking that the alarm fires."
+          exit 1
+
       - name: Run the live smoke test
         run: npm run smoke
+
+      # Written as a file rather than inline, so the prose below is plain text
+      # and not something the shell has to be trusted to quote correctly.
+      - name: Describe the failure
+        if: failure() && (github.event_name == 'schedule' || inputs.simulate_failure)
+        run: |
+          cat > issue-body.md <<'MARKDOWN'
+          The weekly check against the real sites did not pass.
+
+          The run log says which site failed and how far it got: the check
+          covers each site in turn and keeps going after one fails, so "one is
+          fine, the other is not" is visible directly.
+
+          Usually one of:
+
+          - a site changed an endpoint, a response shape or an id scheme
+          - a site was simply down, or rate-limiting, at the time
+          - none of the channels it picks from had a recent VOD long enough
+
+          Only the first needs code. Close this once it passes again; further
+          failures arrive here as comments rather than as new issues.
+          MARKDOWN
+          echo "" >> issue-body.md
+          echo "Run: $RUN_URL" >> issue-body.md
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+      # Only for runs nobody is watching. A failure during a run someone started
+      # by hand is already on their screen, and an issue would be noise — except
+      # when the point of that run was to test this very step.
+      - name: Report the failure as an issue
+        if: failure() && (github.event_name == 'schedule' || inputs.simulate_failure)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+
+          # Created on first use rather than assumed to exist, so this still
+          # works in a fork or a fresh clone of the repository.
+          gh label create live-smoke \
+            --description 'Opened automatically when the weekly live check fails' \
+            --color B60205 2>/dev/null || true
+
+          existing="$(gh issue list --label live-smoke --state open --limit 1 --json number --jq '.[0].number // empty')"
+
+          if [ -n "$existing" ]; then
+            # One issue per outage, not one per week — a thread that grows is
+            # easier to read than five issues saying the same thing.
+            gh issue comment "$existing" --body "Still failing: $RUN_URL"
+          else
+            gh issue create --title 'Live smoke test failed' --label live-smoke --body-file issue-body.md
+          fi
