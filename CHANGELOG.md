@@ -1,5 +1,31 @@
 # Changelog
 
+## 4.0.1
+
+Tidying up after the second site landed. Everything here is a place that still
+behaved, or still read, as though there were only one.
+
+- `--yes` now refuses an ambiguous channel name instead of stopping to ask which
+  site it means. It promises no prompts, and every other prompt already honoured
+  it — the README and `--help` both said this was the behaviour, so the code was
+  the odd one out. Only an interactive `--yes` changes; without a terminal there
+  was never a picker.
+- Setting `FFMPEG_PATH` to the bundled `ffmpeg-static` binary is now recognised
+  as using the bundled build. It was recorded as a system one, which suppressed
+  the message explaining that these builds crash on some systems (WSL2 among
+  them) and that a distribution build fixes it — so the one person who needed
+  that message got a bare `killed by SIGSEGV`.
+- `--qualities` no longer tells you a clip has only one quality. Twitch serves
+  clips in several sizes and the largest is taken; `availableQualities` is
+  empty for a clip because the quality was not chosen here, not because the site
+  offers one. The README now says so, and selecting one is on the roadmap.
+- The last fallback to Kick is gone. Nothing reached it — a bare channel name
+  has asked which site since 4.0.0 — but the code still named a default site,
+  which is the assumption the design rejected sitting where the next reader
+  would take it for intent.
+
+No change to `--json`, `--list --json` or `--progress json`.
+
 ## 4.0.0
 
 - **Twitch is supported**, VODs and clips, from a link or a channel name. It
