@@ -5,6 +5,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { createRequire } from 'node:module';
 
 import { buildArgs, download, findFfmpeg, isUsingBundledFfmpeg } from '../src/ffmpeg.js';
 
@@ -117,6 +118,53 @@ test('findFfmpeg prefers a system ffmpeg over the bundled build', { skip: SKIP_I
 	// when a distribution build is available.
 	assert.equal(findFfmpeg(), 'ffmpeg');
 	assert.equal(isUsingBundledFfmpeg(), false);
+});
+
+/**
+ * Detection caches its answer in module scope, so a second question in this
+ * process gets the first answer. A child process is the honest way to ask again
+ * under a different environment.
+ */
+function detectWith(env) {
+	// An absolute URL, so the child does not depend on the working directory
+	// the runner happened to start in.
+	const moduleUrl = new URL('../src/ffmpeg.js', import.meta.url).href;
+	const probe = spawnSync(
+		process.execPath,
+		['-e', `import('${moduleUrl}').then((m) => console.log(m.findFfmpeg(), m.isUsingBundledFfmpeg()))`],
+		{ env: { ...process.env, ...env }, encoding: 'utf8' }
+	);
+	const [path, bundled] = probe.stdout.trim().split(' ');
+	return { path, bundled: bundled === 'true' };
+}
+
+const BUNDLED_PATH = (() => {
+	try {
+		return createRequire(import.meta.url)('ffmpeg-static');
+	} catch {
+		return null;
+	}
+})();
+
+// Skipped where the bundled build was not installed, and where it was but does
+// not run — which is the whole reason it is the last resort.
+const SKIP_BUNDLED =
+	BUNDLED_PATH && spawnSync(BUNDLED_PATH, ['-version'], { stdio: 'ignore' }).status === 0
+		? false
+		: 'requires a runnable bundled ffmpeg';
+
+test('the bundled build is recognised even when FFMPEG_PATH points at it', { skip: SKIP_BUNDLED }, () => {
+	// It is the same binary with the same crash, so the segfault hint has to
+	// appear for it. Inferring "not bundled" from the slot it was found in got
+	// this wrong and left the user with a bare "killed by SIGSEGV".
+	const { path, bundled } = detectWith({ FFMPEG_PATH: BUNDLED_PATH });
+	assert.equal(path, BUNDLED_PATH);
+	assert.equal(bundled, true);
+});
+
+test('a system ffmpeg is not mistaken for the bundled one', { skip: SKIP_INTEGRATION }, () => {
+	const { bundled } = detectWith({ FFMPEG_PATH: '' });
+	assert.equal(bundled, false);
 });
 
 test('findFfmpeg returns something runnable', { skip: SKIP_INTEGRATION }, () => {

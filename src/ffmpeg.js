@@ -27,13 +27,17 @@ function bundledFfmpeg() {
 export function findFfmpeg() {
 	if (cachedFfmpegPath !== undefined) return cachedFfmpegPath;
 
-	const candidates = [process.env.FFMPEG_PATH, 'ffmpeg', bundledFfmpeg()].filter(Boolean);
+	const bundled = bundledFfmpeg();
+	const candidates = [process.env.FFMPEG_PATH, 'ffmpeg', bundled].filter(Boolean);
 
 	for (const candidate of candidates) {
 		const probe = spawnSync(candidate, ['-version'], { stdio: 'ignore' });
 		if (probe.status === 0) {
 			cachedFfmpegPath = candidate;
-			usingBundledFfmpeg = candidate !== process.env.FFMPEG_PATH && candidate !== 'ffmpeg';
+			// Compared against the bundled path itself, not inferred from which
+			// slot it came out of: FFMPEG_PATH may well point at the bundled
+			// binary, and that is still the bundled binary.
+			usingBundledFfmpeg = candidate === bundled;
 			return cachedFfmpegPath;
 		}
 	}
