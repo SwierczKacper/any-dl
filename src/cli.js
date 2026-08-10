@@ -5,8 +5,10 @@ import { fileURLToPath } from 'node:url';
 
 import { HELP_TEXT, parseArgs } from './args.js';
 import { listingToJson, mediaToJson } from './contract.js';
+import { discardPartial, downloadSegments } from './downloader.js';
 import { download } from './ffmpeg.js';
 import { describeVariant, estimateBytes, getVariants, selectVariant } from './hls.js';
+import { getSegments, selectSegmentRange } from './segments.js';
 import { confirm, input, isInteractive, select } from './prompt.js';
 import { resolveProvider } from './providers/index.js';
 import {
@@ -309,6 +311,64 @@ function makeProgressReporter({ mode, totalSeconds, estimatedBytes }) {
 	};
 }
 
+/**
+ * Fetch a stream segment by segment, then remux the result into MP4.
+ *
+ * The segments land in a `.part` file next to the output, written in order, so
+ * an interrupted run leaves something the next run can carry on from. The remux
+ * is a local stream copy, and `--from` becomes a trim inside the first segment
+ * rather than a seek through the whole playlist.
+ *
+ * Progress is reported for the fetching only. The remux is fast and local, and
+ * `--progress json` promises one stream of positions — a second run of them
+ * counting up from zero would look like the download had restarted.
+ */
+async function downloadStream({ playlistUrl, outputPath, from, to, sliceSeconds, connections, faststart, reporter }) {
+	const { segments, totalSeconds } = await getSegments(playlistUrl);
+	const { segments: wanted, leadingSeconds } = selectSegmentRange(segments, { from, to });
+	const partPath = `${outputPath}.part`;
+
+	const controller = new AbortController();
+	const onSigint = () => controller.abort();
+	process.on('SIGINT', onSigint);
+
+	let fetched;
+	try {
+		fetched = await downloadSegments({
+			segments: wanted,
+			target: partPath,
+			totalSeconds,
+			concurrency: connections,
+			onProgress: reporter.onProgress,
+			signal: controller.signal,
+		});
+	} finally {
+		process.off('SIGINT', onSigint);
+	}
+
+	reporter.done();
+
+	if (fetched.interrupted) {
+		return { interrupted: true, seconds: fetched.seconds, partial: partPath, completed: fetched.completed };
+	}
+
+	info(`Combining ${fetched.completed} parts…`);
+
+	// Trimming happens here, against a local file, so it costs a seek rather than
+	// a walk through the stream. Only the first segment needs it: the fetch
+	// already stopped at the right place.
+	const result = await download({
+		url: partPath,
+		output: outputPath,
+		from: leadingSeconds > 0 ? leadingSeconds : null,
+		to: sliceSeconds > 0 && (from != null || to != null) ? leadingSeconds + sliceSeconds : null,
+		faststart,
+	});
+
+	await discardPartial(partPath);
+	return { ...result, seconds: result.seconds || fetched.seconds };
+}
+
 export async function run(argv) {
 	const options = parseArgs(argv);
 
@@ -493,15 +553,33 @@ export async function run(argv) {
 		estimatedBytes: estimate,
 	});
 
-	const result = await download({
-		url: sourceUrl,
-		output: outputPath,
-		durationSec: media.durationSec,
-		from,
-		to,
-		faststart: options.faststart,
-		onProgress: reporter.onProgress,
-	});
+	// A stream is a playlist of segments, and fetching them here rather than
+	// leaving it to ffmpeg is what allows an interrupted download to be resumed
+	// and a single failed piece to be retried.
+	//
+	// Keyed on the master playlist, not on having picked a variant: a Twitch clip
+	// has variants too, but each one is a finished MP4 rather than a playlist, so
+	// it goes straight to ffmpeg as before.
+	const result = media.masterUrl && variant
+		? await downloadStream({
+				playlistUrl: sourceUrl,
+				outputPath,
+				from,
+				to,
+				sliceSeconds,
+				connections: options.connections,
+				faststart: options.faststart,
+				reporter,
+			})
+		: await download({
+				url: sourceUrl,
+				output: outputPath,
+				durationSec: media.durationSec,
+				from,
+				to,
+				faststart: options.faststart,
+				onProgress: reporter.onProgress,
+			});
 
 	reporter.done();
 
@@ -525,6 +603,15 @@ export async function run(argv) {
 	}
 
 	if (result.interrupted) {
+		if (result.partial) {
+			// Kept deliberately, and named so it is obvious it is not the finished
+			// file. Running the same command again picks up from here.
+			const partialSize = statSync(result.partial).size;
+			warn(`Stopped after ${formatDuration(result.seconds)} (${formatBytes(partialSize)}).`);
+			info('Run the same command again to resume from here.');
+			return 130;
+		}
+
 		warn(`Stopped early. Partial file kept: ${outputPath} (${formatBytes(size)})`);
 		return 130;
 	}

@@ -34,13 +34,8 @@ Want one that is not listed? Ask — the order is not fixed.
   — the length is unknown while it runs, so progress cannot be a percentage,
   the file has to stay playable if the stream drops or the machine sleeps, and
   on Twitch adverts are spliced into the same playlist as the broadcast.
-- **Downloading in parallel.** A stream is fetched as thousands of small
-  segments one after another, and every comparable tool pulls several at once.
-  On a long VOD that is the difference between an hour and a quarter of one,
-  and it is the clearest thing anything else does better today.
 - **Cutting a clip out of a VOD** more directly than `--from` / `--to` — for
   example giving a length instead of an end timestamp.
-- **Resuming an interrupted download** instead of starting the file again.
 - **Naming files from a pattern** rather than the one built-in shape, so a
   library can be organised the way its owner wants: channel, date, title, id,
   quality, in whatever arrangement of folders and separators suits.
@@ -71,6 +66,21 @@ Want one that is not listed? Ask — the order is not fixed.
   Currently no site is given credentials at all, which is the reason nothing
   gated is downloadable; whether that should change is a decision, not an
   oversight.
+
+## Settled
+
+Kept because the answer was not what this list assumed, and the next person to
+wonder should not have to measure it again.
+
+- **Parallel downloading arrived in 4.2.0, and it is not the win this file
+  claimed it was.** The old entry here promised "the difference between an hour
+  and a quarter of one". Measured against both sites: eight connections is about
+  1.5x the raw fetching rate of one, sixteen is no better than eight, and end to
+  end — including the remux — the whole thing came out about 11% faster on a
+  fast line, where a single connection already saturates it. It should help more
+  where round trips rather than bandwidth are the limit. What actually justified
+  fetching segments here was resuming, retrying a single piece, and `--from` no
+  longer reading through everything before it.
 
 ## Ideas
 

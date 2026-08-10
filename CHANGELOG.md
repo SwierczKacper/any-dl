@@ -1,5 +1,36 @@
 # Changelog
 
+## 4.2.0
+
+- **An interrupted download can be resumed.** Stop it with Ctrl+C, or lose the
+  connection, and running the same command again carries on from the last piece
+  it finished rather than starting the file over.
+  - A stream is a playlist of ten-second pieces, and those are now fetched here
+    instead of by ffmpeg, which is what makes the rest of this possible. ffmpeg
+    still writes the MP4, by copying the finished local file — there is no
+    re-encoding, and the result is byte-for-byte what it was before.
+  - The pieces accumulate in a `.part` file next to the output, with a small
+    file recording the position. Both are removed once the MP4 is written.
+  - Changing the quality or the `--from` / `--to` range starts again, because
+    that is a different set of pieces.
+  - **Ctrl+C no longer leaves a shortened but playable MP4.** It leaves the
+    `.part` file instead, and says how to continue. That is the trade for being
+    able to resume at all.
+- **One failed piece is retried on its own**, four times with a widening delay,
+  instead of a single bad response costing the whole transfer.
+- **`--connections <n>`** sets how many pieces are fetched at once, 1–16,
+  default 8. Be sceptical of it: on a fast line one connection already saturates
+  it, and eight measured about 11% quicker end to end here, with sixteen no
+  better than eight. It helps where round trips rather than bandwidth are the
+  limit. The reason to fetch pieces individually is resuming and retrying.
+- `--from` no longer reads through everything before the position it was given;
+  it selects the pieces that cover the range and trims the first one locally.
+  Accuracy is unchanged — still keyframe-bound, as it was.
+
+`--json`, `--list --json` and `--progress json` are unchanged in shape.
+`--progress json` now updates as bytes arrive rather than once per piece, so it
+keeps its roughly-twice-a-second cadence on a slow connection too.
+
 ## 4.1.0
 
 - A clip's quality can now be chosen, where the site serves more than one. Kick
