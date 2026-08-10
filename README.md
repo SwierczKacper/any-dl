@@ -141,7 +141,11 @@ This one:
 - **Understands both old and new Kick links**, including the new UUIDv7 ids
 - **Reads Twitch without a browser at all**, and without the persisted-query
   hashes that break other tools whenever Twitch changes its schema
-- **Never overwrites** an existing file, and leaves a playable MP4 on Ctrl+C
+- **Never overwrites** an existing file
+- **Resumes an interrupted download** — stop it with Ctrl+C, run the same
+  command again, and it carries on from the piece it reached
+- **Retries a single failed piece** rather than losing hours of transfer to one
+  bad response
 
 ---
 
@@ -280,6 +284,7 @@ export ANY_DL_PROVIDER=twitch
 | `-l, --list` | print the channel's VODs/clips and exit |
 | `-n, --limit <n>` | how many entries to list (default: 20) |
 | `--faststart` | move the MP4 index to the front — nicer for streaming, slow on huge files |
+| `--connections <n>` | how many pieces to fetch at once, 1–16 (default: 8) |
 | `-y, --yes` | no prompts: takes the best quality, and fails rather than asking if it will not fit |
 | `--json` | print metadata + the direct stream URL to stdout instead of downloading; with `--list`, prints the whole listing as JSON |
 | `--progress <mode>` | `auto` (default), `json` for NDJSON on stdout, or `none` |
@@ -495,14 +500,32 @@ CDN directly, on Twitch via a signed playback token. Either way it is parsed
 into variants (typically 1080p60 / 720p60 / 480p30 / 360p30 / 160p30), sorted by
 bitrate, and `--quality` selects one. Clips are plain MP4s and skip this step.
 
-**4. Download.** ffmpeg copies the chosen variant into an MP4 with `-c copy`, so
-there is **no re-encoding**: bit-for-bit the same video and audio the site served.
-Progress comes from ffmpeg's `-progress pipe:1` output, and since the VOD duration
-is known in advance, the percentage and ETA are real rather than guessed.
+**4. Download.** A stream is not one file: it is a playlist of ten-second pieces.
+Those pieces are fetched here — several at once, written strictly in order — and
+ffmpeg is then handed the finished local file to copy into an MP4 with `-c copy`,
+so there is **no re-encoding**: bit-for-bit the same video and audio the site
+served. Because the pieces are fetched here rather than by ffmpeg, a download can
+stop and be resumed, one bad response costs one piece instead of the whole
+transfer, and `--from` picks the right pieces instead of reading through
+everything before them.
+
+The pieces accumulate in a `.part` file beside the output, along with a small
+file recording how far it got. Both disappear once the MP4 is written; if the
+download stops, both stay, and running the same command again continues from
+there. Progress is the count of what has been written against the duration you
+asked for, so the percentage and ETA are real rather than guessed.
 
 ```
   █████████░░░░░░░░░░░░░░░   35.6%   ETA 00:00:43
   00:21:22 / 01:00:00   1.2 GB / ~3.4 GB   89.0 MB/s
+```
+
+When the last piece has arrived, the local file is copied into its MP4 container
+and the working files are removed:
+
+```
+› Combining 49 parts…
+✓ Saved xqc - 2026-08-10 - LIVE DRAMA NEWS VIDEOS GAMES REACTS.mp4 (78.5 MB)
 ```
 
 Reading left to right on the second line: how much of the requested range has
@@ -511,8 +534,8 @@ transfer rate. The projected size is extrapolated from bytes actually received
 rather than the playlist's advertised bitrate, so it sharpens as the download
 proceeds. On a terminal under 72 columns this collapses to a single compact line.
 
-ffmpeg also reports a multiple of realtime — how many seconds of video it writes
-per second of waiting. That drives the ETA but is not displayed, since it means
+There is also a multiple of realtime — how many seconds of video arrive per
+second of waiting. That drives the ETA but is not displayed, since it means
 nothing without knowing what it measures. It does appear when output is not a
 terminal, where the reader is a log rather than a person:
 
@@ -531,7 +554,9 @@ src/contract.js         the machine-readable output shapes, built explicitly
 src/http.js             plain HTTP, for everything that needs no browser
 src/browser.js          Chrome detection + reading the Cloudflare-protected API
 src/hls.js              master playlist parsing and quality selection
-src/ffmpeg.js          ffmpeg detection, download, progress parsing
+src/segments.js         media playlist parsing and range selection
+src/downloader.js       fetching segments, in order, with resume and retry
+src/ffmpeg.js          ffmpeg detection, remux, progress parsing
 src/prompt.js          arrow-key list picker and prompts (no dependencies)
 src/cli.js             orchestration
 src/args.js            argument parsing
@@ -624,8 +649,18 @@ off. That's the trade-off for not re-encoding — pass the file through a re-enc
 afterwards if you need an exact cut.
 
 **Can I resume an interrupted download?**
-Not currently. Ctrl+C finalises the container so the partial file stays playable,
-but restarting begins from the beginning (or use `--from` to skip ahead).
+Yes. Ctrl+C leaves a `.part` file beside the output and tells you so; run the
+same command again and it continues from the last piece it finished, re-fetching
+at most a couple of seconds. Change the quality or the `--from` / `--to` range
+and it starts again, because that is a different set of pieces.
+
+**Does `--connections` make it faster?**
+Sometimes, and less than you would hope. On a fast line one connection already
+saturates it — eight was about 11% quicker end to end in testing here, and
+sixteen was no better than eight. It earns its keep where round trips rather
+than bandwidth are the limit. The reason to fetch pieces individually is
+resuming and retrying, not speed; `--connections 1` is a perfectly reasonable
+setting.
 
 **Why Chrome instead of a scraping library?**
 Because a library that gets through Cloudflare needs a real browser engine anyway.
