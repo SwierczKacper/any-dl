@@ -31,7 +31,7 @@ jobs:
       - name: Syntax check
         run: for file in bin/*.js src/*.js; do node --check "$file"; done
 
-      # Unit tests plus pty-backed prompt tests; all offline, no Kick access.
+      # Unit tests plus pty-backed prompt tests; all offline, no site access.
       - name: Tests
         run: npm test
 

@@ -355,7 +355,10 @@ export async function run(argv) {
 
 	if (options.qualities) {
 		if (variants.length === 0) {
-			process.stdout.write('This is a clip — only the original quality is available.\n');
+			// Not necessarily the only one that exists: some sites offer a clip in
+			// several sizes and the best is taken without asking. Saying so would
+			// be a promise this does not yet keep.
+			process.stdout.write('This is a clip — its quality is not selectable here.\n');
 		} else {
 			const seconds = (parseTimecode(options.to) ?? media.durationSec ?? 0) - (parseTimecode(options.from) ?? 0);
 			for (const choice of qualityChoices(variants, seconds)) process.stdout.write(`${choice.name}\n`);

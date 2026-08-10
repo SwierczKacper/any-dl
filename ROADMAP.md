@@ -32,7 +32,9 @@ Want one that is not listed? Ask — the order is not fixed.
 - **Batch input** — a file of links, or every VOD on a channel.
 - **Choosing a clip's quality.** Clips are treated as having exactly one, which
   was true of the first site supported and is not true of Twitch — its clips
-  come in several and the best is taken without asking.
+  come in several and the largest is taken without asking. Until that changes,
+  `availableQualities` is empty for every clip, which understates what is
+  actually on offer.
 - **Reaching content that needs an account**, such as a subscriber-only VOD.
   Currently no site is given credentials at all, which is the reason nothing
   gated is downloadable; whether that should change is a decision, not an
@@ -59,8 +61,8 @@ before it becomes anything more than a line in this section.
 ## Known issues
 
 Nothing open. If you hit something, please
-[report it](https://github.com/SwierczKacper/any-dl/issues/new/choose) — Kick
-has no public API and it has broken once already.
+[report it](https://github.com/SwierczKacper/any-dl/issues/new/choose) — no site
+here offers a public API, and Kick has broken once already.
 
 ---
 

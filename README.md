@@ -425,6 +425,11 @@ any-dl <url> --json
 
 That adds `sourceUrl`, `selectedQuality` and `availableQualities`.
 
+For a clip, `availableQualities` is empty and `selectedQuality` is `"original"`.
+That says the quality was not chosen here, not that the site offers only one —
+Twitch serves clips in several sizes and the largest is taken. Selecting one is
+[on the roadmap](ROADMAP.md).
+
 **Progress as NDJSON on stdout**, one object per line, roughly twice a second:
 
 ```bash
