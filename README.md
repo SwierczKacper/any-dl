@@ -356,6 +356,21 @@ Choosing one of those asks for confirmation, defaulting to no. With `--yes` or n
 terminal there is nobody to ask, so it fails instead of filling the disk. If the
 free space cannot be read, the check is skipped rather than guessed at.
 
+Clips get the same list where the site serves more than one size. There is less
+to show — Twitch states a height and sometimes a frame rate, but no width and no
+bitrate, so there is nothing to estimate a size from and those columns are left
+out rather than filled with "unknown":
+
+```
+? Select quality (88.7 GB free) — ↑/↓ move, Enter select, q quit
+❯ 1080p   (recommended)
+  720p
+  480p
+  360p
+```
+
+A clip served as a single file skips the question, as it always did.
+
 Passing `--quality` skips the list entirely, as do `--yes` and any run without a
 terminal, which keeps scripts and CI working exactly as before.
 
@@ -425,10 +440,11 @@ any-dl <url> --json
 
 That adds `sourceUrl`, `selectedQuality` and `availableQualities`.
 
-For a clip, `availableQualities` is empty and `selectedQuality` is `"original"`.
-That says the quality was not chosen here, not that the site offers only one —
-Twitch serves clips in several sizes and the largest is taken. Selecting one is
-[on the roadmap](ROADMAP.md).
+Clips are described the same way. Where a site serves one in several sizes,
+they are listed like a VOD's — Twitch reports a height and sometimes a frame
+rate, but no width and no bitrate, so a clip carries no size estimate. A site
+that serves a single file gives an empty `availableQualities` and
+`"original"` as the selection.
 
 **Progress as NDJSON on stdout**, one object per line, roughly twice a second:
 

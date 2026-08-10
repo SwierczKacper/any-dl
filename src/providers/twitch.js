@@ -235,12 +235,46 @@ function normalizeClip(clip, channelFallback) {
 		// Filled in by getClip: a listing does not pay for a token per entry.
 		directUrl: null,
 		masterUrl: null,
+		variants: null,
 	};
 }
 
-/** Highest first — `quality` is a height as a string, e.g. "1080". */
-function bestQuality(qualities = []) {
-	return [...qualities].sort((a, b) => Number(b.quality) - Number(a.quality))[0] ?? null;
+/**
+ * A clip's sizes, in the shape the quality picker already understands.
+ *
+ * Twitch gives a height as a string and sometimes a frame rate; there is no
+ * width and no bitrate, so those stay null and everything downstream has to
+ * cope with not knowing them. Sorted tallest first, which is the order the
+ * picker and `--quality best` both assume.
+ *
+ * Exported so the naming and ordering can be tested without a live clip.
+ */
+export function clipVariants(clip) {
+	const token = clip.playbackAccessToken;
+
+	return (clip.videoQualities ?? [])
+		.filter((quality) => quality?.sourceURL)
+		.map((quality) => {
+			const height = Number(quality.quality) || null;
+			const frameRate = Math.round(Number(quality.frameRate)) || null;
+
+			// The CDN still wants the signed token, even for a plain MP4.
+			const url = new URL(quality.sourceURL);
+			if (token?.signature) {
+				url.searchParams.set('sig', token.signature);
+				url.searchParams.set('token', token.value);
+			}
+
+			return {
+				name: height ? `${height}p${frameRate ?? ''}` : 'original',
+				width: null,
+				height,
+				frameRate,
+				bandwidth: 0,
+				url: url.href,
+			};
+		})
+		.sort((a, b) => (b.height ?? 0) - (a.height ?? 0));
 }
 
 export async function getClip(slug) {
@@ -260,17 +294,10 @@ export async function getClip(slug) {
 	const clip = data.clip;
 	if (!clip) throw new UserFacingError(`Twitch has no clip "${slug}".`);
 
-	const quality = bestQuality(clip.videoQualities);
-	if (!quality?.sourceURL) throw new UserFacingError(`Clip "${slug}" has no downloadable video.`);
+	const variants = clipVariants(clip);
+	if (variants.length === 0) throw new UserFacingError(`Clip "${slug}" has no downloadable video.`);
 
-	// A clip is a plain MP4, but the CDN still wants the signed token on the URL.
-	const url = new URL(quality.sourceURL);
-	if (clip.playbackAccessToken?.signature) {
-		url.searchParams.set('sig', clip.playbackAccessToken.signature);
-		url.searchParams.set('token', clip.playbackAccessToken.value);
-	}
-
-	return { ...normalizeClip(clip), directUrl: url.href };
+	return { ...normalizeClip(clip), variants };
 }
 
 /**
@@ -279,7 +306,7 @@ export async function getClip(slug) {
  * for the single item that was actually chosen.
  */
 export async function resolvePlayable(media) {
-	if (media.masterUrl || media.directUrl) return media;
+	if (media.masterUrl || media.directUrl || media.variants?.length) return media;
 	return media.kind === 'clip' ? getClip(media.id) : getVideo(media.id);
 }
 

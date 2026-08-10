@@ -1,5 +1,18 @@
 # Changelog
 
+## 4.1.0
+
+- A clip's quality can now be chosen, where the site serves more than one. Kick
+  serves a single file per clip, but Twitch offers four or so, and the largest
+  was taken without asking — `--quality 720` on a clip did nothing, and
+  `availableQualities` came back empty for something with four of them.
+  - Clips now go through the same picker and the same `--quality` as a VOD.
+  - There is less to show for them: Twitch states a height and sometimes a
+    frame rate, but no width and no bitrate. Columns nothing can fill are left
+    out rather than printed as "unknown", and a clip carries no size estimate
+    or disk-space warning, because neither would be measured.
+  - A clip served as a single file still skips the question.
+
 ## 4.0.1
 
 Tidying up after the second site landed. Everything here is a place that still
