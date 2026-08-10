@@ -26,9 +26,31 @@ Want one that is not listed? Ask — the order is not fixed.
 
 ## Features
 
+- **Recording a stream while it is still live**, rather than waiting for the
+  broadcast to end and become a VOD. The natural companion is waiting for a
+  channel to come online and starting by itself, which turns the tool into
+  something you can leave running. Both sites hand a live playlist to anyone
+  who asks, so the fetching is much like a VOD; the awkward parts are elsewhere
+  — the length is unknown while it runs, so progress cannot be a percentage,
+  the file has to stay playable if the stream drops or the machine sleeps, and
+  on Twitch adverts are spliced into the same playlist as the broadcast.
+- **Downloading in parallel.** A stream is fetched as thousands of small
+  segments one after another, and every comparable tool pulls several at once.
+  On a long VOD that is the difference between an hour and a quarter of one,
+  and it is the clearest thing anything else does better today.
 - **Cutting a clip out of a VOD** more directly than `--from` / `--to` — for
   example giving a length instead of an end timestamp.
 - **Resuming an interrupted download** instead of starting the file again.
+- **Naming files from a pattern** rather than the one built-in shape, so a
+  library can be organised the way its owner wants: channel, date, title, id,
+  quality, in whatever arrangement of folders and separators suits.
+- **Chapters.** A Twitch VOD is marked up with what was played and when, and
+  those markers are there for the asking — enough to list them, to jump to one,
+  or to cut a long stream into a file per game.
+- **Writing the details into the file itself**, so a title, a date and the
+  original link survive being moved out of the folder they were downloaded to.
+- **Completions for the shell**, so channels, flags and quality names can be
+  finished with Tab.
 - **Batch input** — a file of links, or every VOD on a channel.
 - **Downloading a channel's clips in bulk**, ordered and narrowed rather than
   taken as they come: by views or by date, above a view count, or within a
@@ -56,6 +78,13 @@ Not planned — things worth looking into, kept here so they are not lost. Each
 needs someone to work out whether it is possible and whether it is worth doing
 before it becomes anything more than a line in this section.
 
+- **Reaching a broadcast that is no longer listed.** Deleted and unlisted
+  streams often stay on the CDN for a while after they stop being linked
+  anywhere, and other tools go looking for them by reconstructing the address
+  from what is known about the stream. It works, but it works by guessing at
+  URLs, it breaks whenever a site changes how it names things, and it is a
+  different thing from reading a public page — worth a decision about whether
+  it belongs here at all before any of it is written.
 - **Fetching only the clips you do not already have.** Ask for a channel's
   clips and get the ones missing rather than the whole list again. The obvious
   design is a file recording what was taken before, and that is the part worth
