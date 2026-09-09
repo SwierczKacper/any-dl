@@ -64,6 +64,8 @@ Options
   -l, --list            list the channel's VODs/clips and exit
   -n, --limit <n>       how many entries to list (default: 20)
       --faststart       move the MP4 index to the front (extra pass, slow on big files)
+      --connections <n> how many pieces to fetch at once, 1-16 (default: 8)
+                        an interrupted download resumes when you run it again
   -y, --yes             no prompts: best quality, fail if it will not fit on disk,
                         and fail rather than ask which site a bare name means
       --json            print machine-readable metadata to stdout instead of downloading
@@ -110,6 +112,9 @@ export function parseArgs(argv) {
 		list: false,
 		qualities: false,
 		limit: 20,
+		// Eight is where the measured gain stops improving; more connections only
+		// add handshakes. See downloader.js.
+		connections: 8,
 		faststart: false,
 		yes: false,
 		json: false,
@@ -154,6 +159,16 @@ export function parseArgs(argv) {
 				const limit = Number(takeValue());
 				if (!Number.isInteger(limit) || limit < 1) throw new UserFacingError('--limit must be a positive integer.');
 				options.limit = limit;
+				break;
+			}
+			case '--connections': {
+				const connections = Number(takeValue());
+				// Capped rather than trusted: past eight it stops helping, and a large
+				// number is a good way to be rate-limited by the CDN.
+				if (!Number.isInteger(connections) || connections < 1 || connections > 16) {
+					throw new UserFacingError('--connections must be a whole number between 1 and 16.');
+				}
+				options.connections = connections;
 				break;
 			}
 			case '--channel-dir': options.channelDir = true; break;
